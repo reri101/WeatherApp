@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">WeatherApp</string>
+    <string name="application_name">Aplikacja Pogodowa</string>
+    <string name="fav_list">Lista ulubionych lokalizacji</string>
+    <string name="reloadData">Odśwież informacje pogodowe</string>
+    <string name="celsjuszDegree">°C</string>
+    <string name="fahrenheitDegree">°F</string>
+    <string name="unitOfMeasure">Jednostka miary</string>
+</resources>

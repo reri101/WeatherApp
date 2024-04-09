@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="CustomSwitchStyle" parent="Widget.AppCompat.CompoundButton.Switch">
+        <item name="android:textColor">@color/white</item>
+        <item name="android:thumbTint">@color/blue</item>
+        <item name="android:trackTint">@color/green</item>
+    </style>
+</resources>
