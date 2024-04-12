@@ -47,8 +47,9 @@ class MainActivity : AppCompatActivity() {
                     val temperature = responseBody.main.temp.toString()
                     val humidity = responseBody.main.humidity.toString()
                     val windSpeed = responseBody.wind.speed.toString()
-                    val sunRise = responseBody.sys.sunrise.toString()
-                    val sunSet = responseBody.sys.sunset.toString()
+                    val windDeg = responseBody.wind.deg.toString()
+                    val sunRise = responseBody.sys.sunrise.toLong()
+                    val sunSet = responseBody.sys.sunset.toLong()
                     val pressure = responseBody.main.pressure.toString()
                     val condition = responseBody.weather.firstOrNull()?.main?: "unknown"
                     val maxTemp = responseBody.main.temp_max.toString()
@@ -59,15 +60,27 @@ class MainActivity : AppCompatActivity() {
                     binding.weatherType.text = binding.weatherType.text.toString().replace("Sunny",condition)
                     binding.humidity.text = binding.humidity.text.toString().replace("000",humidity)
                     binding.windSpeed.text = binding.windSpeed.text.toString().replace("0.00",windSpeed)
-                    binding.sunrise.text = binding.sunrise.text.toString().replace("00:00",sunRise)
-                    binding.sunset.text = binding.sunset.text.toString().replace("00:00",sunSet)
+                    binding.sunrise.text = time(sunRise)
+                    binding.sunset.text = time(sunSet)
                     binding.pressure.text = binding.pressure.text.toString().replace("0000",pressure)
-                    binding.weatherCondition.text = binding.weatherCondition.text.toString().replace("Sunny",condition)
-                    binding.maxTemp.text = binding.maxTemp.text.toString().replace("00:00",maxTemp)
-                    binding.minTemp.text = binding.minTemp.text.toString().replace("00:00",minTemp)
+                    binding.weatherCondition.text = binding.weatherCondition.text.toString().replace("00:00",windDeg)
+                    binding.maxMinTemp.text = binding.maxMinTemp.text.toString().replace("Max",maxTemp)
+                    binding.maxMinTemp.text = binding.maxMinTemp.text.toString().replace("Min",minTemp)
                     binding.dayOfDate.text=dayName(System.currentTimeMillis())
                     binding.date.text=date(System.currentTimeMillis())
                     binding.cityName.text= binding.cityName.text.toString().plus(cityName)
+
+                    val fahrenheit = getString(R.string.fahrenheitDegree)
+                    val celsjusz = getString(R.string.celsjuszDegree)
+                    if(units=="imperial"){
+                        binding.temperature.text = binding.temperature.text.toString().replace(celsjusz,fahrenheit)
+                        binding.maxMinTemp.text = binding.maxMinTemp.text.toString().replace(celsjusz,fahrenheit)
+                    }else{
+                        binding.temperature.text = binding.temperature.text.toString().replace(fahrenheit,celsjusz)
+                        binding.maxMinTemp.text = binding.maxMinTemp.text.toString().replace(fahrenheit,celsjusz)
+                    }
+
+                    changeImagsAccordingToWeatherCondition(condition)
                     //Log.d("TAG", "onResponse: $windSpeed")
 
                 }
@@ -77,13 +90,47 @@ class MainActivity : AppCompatActivity() {
             }
         })
     }
-    fun dayName(timestamp: Long): String{
+    private fun dayName(timestamp: Long): String{
         val sdf = SimpleDateFormat("EEEE", Locale.getDefault())
         return sdf.format((Date()))
     }
 
-    fun date(timestamp: Long): String {
+    private fun date(timestamp: Long): String {
         val sdf = SimpleDateFormat("dd MMMM yyyy", Locale.getDefault())
         return sdf.format((Date()))
+    }
+    private fun time(timestamp: Long): String {
+        val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
+        return sdf.format((Date(timestamp*1000)))
+    }
+
+    private fun changeImagsAccordingToWeatherCondition(conditions: String){
+        when(conditions){
+            "Clear Sky", "Sunny", "Clear" ->{
+                binding.root.setBackgroundResource(R.drawable.sunny_background)
+                binding.lottieAnimationView.setAnimation(R.raw.sun)
+            }
+
+            "Partly Clouds", "Clouds", "Overcast", "Mist", "Foggy", "Haze" ->{
+                binding.root.setBackgroundResource(R.drawable.colud_background)
+                binding.lottieAnimationView.setAnimation(R.raw.cloud)
+            }
+
+            "Light Rain", "Drizzle", "Moderate Rain", "Showers", "Heavy Rain" ->{
+                binding.root.setBackgroundResource(R.drawable.rain_background)
+                binding.lottieAnimationView.setAnimation(R.raw.rain)
+            }
+
+            "Light Snow", "Moderate Snow", "Heavy Snow", "Blizzard" ->{
+                binding.root.setBackgroundResource(R.drawable.snow_background)
+                binding.lottieAnimationView.setAnimation(R.raw.snow)
+            }
+            else ->{
+                binding.root.setBackgroundResource(R.drawable.sunny_background)
+                binding.lottieAnimationView.setAnimation(R.raw.sun)
+            }
+
+        }
+        binding.lottieAnimationView.playAnimation()
     }
 }

@@ -38,7 +38,6 @@
         android:id="@+id/lottieAnimationView"
         android:layout_width="150dp"
         android:layout_height="150dp"
-        android:layout_marginStart="-50dp"
         android:layout_marginTop="16dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/cityName"
@@ -56,7 +55,6 @@
         android:textColor="@color/black"
         android:textSize="20sp"
         app:layout_constraintEnd_toEndOf="@+id/lottieAnimationView"
-        app:layout_constraintStart_toEndOf="@+id/lottieAnimationView"
         app:layout_constraintTop_toBottomOf="@+id/lottieAnimationView" />
 
     <TextView
@@ -73,30 +71,18 @@
         app:layout_constraintTop_toBottomOf="@+id/cityName" />
 
     <TextView
-        android:id="@+id/maxTemp"
+        android:id="@+id/maxMinTemp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="52dp"
+        android:layout_marginTop="12dp"
         android:fontFamily="@font/merriweathersans_regular"
-        android:text="Max: 00:00 °C"
+        android:text="Min °C - Max °C"
         android:textColor="@color/black"
         android:textSize="16sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.498"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/weatherType" />
+        app:layout_constraintEnd_toEndOf="@+id/temperature"
+        app:layout_constraintStart_toStartOf="@+id/temperature"
+        app:layout_constraintTop_toBottomOf="@+id/temperature" />
 
-    <TextView
-        android:id="@+id/minTemp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:fontFamily="@font/merriweathersans_regular"
-        android:text="Min: 00:00 °C"
-        android:textColor="@color/black"
-        android:textSize="16sp"
-        app:layout_constraintEnd_toEndOf="@+id/maxTemp"
-        app:layout_constraintStart_toStartOf="@+id/maxTemp"
-        app:layout_constraintTop_toBottomOf="@+id/maxTemp" />
 
     <TextView
         android:id="@+id/dayOfDate"
@@ -107,15 +93,15 @@
         android:text="Tuesday"
         android:textColor="@color/black"
         android:textSize="20sp"
-        app:layout_constraintEnd_toEndOf="@+id/minTemp"
-        app:layout_constraintStart_toStartOf="@+id/minTemp"
-        app:layout_constraintTop_toBottomOf="@+id/minTemp" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/maxMinTemp" />
 
     <TextView
         android:id="@+id/date"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="30dp"
+        android:layout_marginTop="12dp"
         android:fontFamily="@font/merriweathersans_regular"
         android:text="21 February 2024"
         android:textColor="@color/black"
@@ -248,9 +234,9 @@
                 android:orientation="vertical">
 
                 <ImageView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:srcCompat="@drawable/wind" />
+                    android:layout_width="wrap_content"
+                    android:layout_height="30dp"
+                    android:src="@drawable/wind"/>
 
                 <TextView
                     android:id="@+id/windSpeed"
@@ -281,9 +267,9 @@
                 android:orientation="vertical">
 
                 <ImageView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:srcCompat="@drawable/conditions" />
+                    android:layout_width="wrap_content"
+                    android:layout_height="30dp"
+                    android:src="@drawable/wind_direction" />
 
                 <TextView
                     android:id="@+id/weatherCondition"
@@ -291,7 +277,7 @@
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/merriweathersans_medium"
                     android:gravity="center"
-                    android:text="Sunny"
+                    android:text="00:00°"
                     android:textColor="@color/black" />
 
                 <TextView
@@ -300,7 +286,7 @@
                     android:layout_marginBottom="5dp"
                     android:fontFamily="@font/merriweathersans_regular"
                     android:gravity="center"
-                    android:text="Condition"
+                    android:text="Wind direction"
                     android:textColor="@color/black"
                     android:textSize="10sp" />
             </LinearLayout>
@@ -314,9 +300,9 @@
                 android:orientation="vertical">
 
                 <ImageView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:srcCompat="@drawable/sea" />
+                    android:layout_width="wrap_content"
+                    android:layout_height="30dp"
+                    android:src="@drawable/resilience" />
 
                 <TextView
                     android:id="@+id/pressure"
@@ -333,7 +319,7 @@
                     android:layout_marginBottom="5dp"
                     android:fontFamily="@font/merriweathersans_regular"
                     android:gravity="center"
-                    android:text="Sea level"
+                    android:text="Pressure"
                     android:textColor="@color/black"
                     android:textSize="10sp" />
             </LinearLayout>
