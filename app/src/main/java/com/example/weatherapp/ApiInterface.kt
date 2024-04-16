@@ -11,4 +11,7 @@ interface ApiInterface {
         @Query("appid") appid:String,
         @Query("units") units:String
     ) : Call<WeatherApp>
+
+    @GET("geo/1.0/country")
+    fun getCountries(): Call<List<Country>>
 }

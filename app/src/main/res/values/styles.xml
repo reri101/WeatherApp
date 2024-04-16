@@ -6,4 +6,9 @@
         <item name="android:thumbTint">@color/blue</item>
         <item name="android:trackTint">@color/green</item>
     </style>
+
+    <style name="Widget.Theme.WeatherApp.ButtonBar.Fullscreen" parent="">
+        <item name="android:background">@color/black_overlay</item>
+        <item name="android:buttonBarStyle">?android:attr/buttonBarStyle</item>
+    </style>
 </resources>
