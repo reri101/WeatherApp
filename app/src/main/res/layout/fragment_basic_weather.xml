@@ -5,7 +5,8 @@
     android:id="@+id/main1"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".fragments.BasicWeatherFragment">
+    tools:context=".fragments.BasicWeatherFragment"
+    android:background="@color/transparent">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/constraintLayoutB"

@@ -1,5 +1,6 @@
 package com.example.weatherapp.fragments
 
+import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
 import android.os.Bundle
@@ -23,76 +24,40 @@ import java.util.Locale
 import java.util.TimeZone
 import android.os.Handler
 import android.os.Looper
+import com.example.weatherapp.databinding.FragmentBasicWeatherBinding
 
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
-
-/**
- * A simple [Fragment] subclass.
- * Use the [AdvanceWeatherFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
 class AdvanceWeatherFragment : Fragment() {
     private lateinit var sharedPreferences: SharedPreferences
-    private var param1: String? = null
-    private var param2: String? = null
-    private val binding: FragmentAdvanceWeatherBinding by lazy {
-        FragmentAdvanceWeatherBinding.inflate(layoutInflater)
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
-
-        sharedPreferences = requireContext().getSharedPreferences("WeatherAppPrefs", MODE_PRIVATE)
-        val units = sharedPreferences.getString("units", "metric") ?: "metric"
-
-        fetachWeatherData("Warsaw", units)
-
-//        val handler = Handler(Looper.getMainLooper())
-//        val runnableCode = object : Runnable {
-//            override fun run() {
-//                updateCurrentTime()
-//                handler.postDelayed(this, 60000)
-//            }
-//        }
-//        handler.post(runnableCode)
-    }
+    private lateinit var binding: FragmentAdvanceWeatherBinding
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_advance_weather, container, false)
+        binding = FragmentAdvanceWeatherBinding.inflate(inflater, container, false)
+        setUpWeatherInfo()
+        return binding.root
     }
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment AdvanceWeatherFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            AdvanceWeatherFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
-                }
+
+    fun setUpWeatherInfo(){
+        sharedPreferences = requireContext().getSharedPreferences(
+            "WeatherAppPrefs",
+            Context.MODE_PRIVATE
+        )
+        val units = sharedPreferences.getString("units", "metric") ?: "metric"
+        fetachWeatherData("Warsaw", units)
+
+        val handler = Handler(Looper.getMainLooper())
+        val runnableCode = object : Runnable {
+            override fun run() {
+                updateCurrentTime()
+                handler.postDelayed(this, 60000)
             }
+        }
+        handler.post(runnableCode)
     }
-
 
 
     private fun updateCurrentTime() {
@@ -183,26 +148,21 @@ class AdvanceWeatherFragment : Fragment() {
     private fun changeImagsAccordingToWeatherCondition(conditions: String){
         when(conditions){
             "Clear Sky", "Sunny", "Clear" ->{
-                binding.root.setBackgroundResource(R.drawable.sunny_background)
                 binding.lottieAnimationView.setAnimation(R.raw.sun2)
             }
 
             "Partly Clouds", "Clouds", "Overcast", "Mist", "Foggy", "Haze" ->{
-                binding.root.setBackgroundResource(R.drawable.colud_background)
                 binding.lottieAnimationView.setAnimation(R.raw.cloud)
             }
 
-            "Light Rain", "Drizzle", "Moderate Rain", "Showers", "Heavy Rain" ->{
-                binding.root.setBackgroundResource(R.drawable.rain_background)
+            "Light Rain", "Drizzle", "Moderate Rain", "Showers", "Heavy Rain", "Rain" ->{
                 binding.lottieAnimationView.setAnimation(R.raw.rain)
             }
 
             "Light Snow", "Moderate Snow", "Heavy Snow", "Blizzard" ->{
-                binding.root.setBackgroundResource(R.drawable.snow_background)
                 binding.lottieAnimationView.setAnimation(R.raw.snow)
             }
             else ->{
-                binding.root.setBackgroundResource(R.drawable.sunny_background)
                 binding.lottieAnimationView.setAnimation(R.raw.sun2)
             }
 

@@ -2,6 +2,7 @@ package com.example.weatherapp.fragments
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -10,9 +11,11 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import com.example.weatherapp.ApiInterface
 import com.example.weatherapp.R
 import com.example.weatherapp.WeatherApp
+import com.example.weatherapp.databinding.ActivityMainBinding
 import com.example.weatherapp.databinding.FragmentAdvanceWeatherBinding
 import com.example.weatherapp.databinding.FragmentBasicWeatherBinding
 import retrofit2.Call
@@ -25,69 +28,27 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
 
-/**
- * A simple [Fragment] subclass.
- * Use the [BasicWeatherFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
 class BasicWeatherFragment : Fragment() {
     private lateinit var sharedPreferences: SharedPreferences
-    private var param1: String? = null
-    private var param2: String? = null
-    private val binding: FragmentBasicWeatherBinding by lazy {
-        FragmentBasicWeatherBinding.inflate(layoutInflater)
-    }
+    private lateinit  var binding: FragmentBasicWeatherBinding
+    private lateinit  var bindingMain: ActivityMainBinding
     private val handler = Handler(Looper.getMainLooper())
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
-
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(R.layout.fragment_basic_weather, container, false)
+        bindingMain = ActivityMainBinding.inflate(layoutInflater)
+        binding = FragmentBasicWeatherBinding.inflate(inflater, container, false)
+        setUpWeatherInfo()
+        return binding.root
 
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
 
-        //setUpWeatherInfo()
-        binding.dayOfDateB.setTextColor(resources.getColor(R.color.green)) // Tutaj ustaw odpowiedni kolor
 
-    }
-
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment BasicWeatherFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            BasicWeatherFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
-                }
-            }
-    }
     fun setUpWeatherInfo(){
         sharedPreferences = requireContext().getSharedPreferences(
             "WeatherAppPrefs",
@@ -136,6 +97,7 @@ class BasicWeatherFragment : Fragment() {
 
 
 
+
                     handler.post {
                     binding.temperatureB.text = binding.temperatureB.text.toString().replace("00:00",temperature)
                     test= binding.temperatureB.text
@@ -166,9 +128,7 @@ class BasicWeatherFragment : Fragment() {
 
                     changeImagsAccordingToWeatherCondition(condition)
                     //Log.d("TAG", "onResponse: $windSpeed")
-                    requireActivity().runOnUiThread {
-                        binding.constraintLayoutB.invalidate()
-                    }
+
 
                 }
             }
@@ -194,27 +154,27 @@ class BasicWeatherFragment : Fragment() {
     private fun changeImagsAccordingToWeatherCondition(conditions: String){
         when(conditions){
             "Clear Sky", "Sunny", "Clear" ->{
-                binding.root.setBackgroundResource(R.drawable.sunny_background)
-                binding.lottieAnimationViewB.setAnimation(R.raw.sun2)
+//                binding.root.setBackgroundResource(R.drawable.sunny_background)
+                binding.lottieAnimationViewB.setAnimation(R.raw.sun)
             }
 
             "Partly Clouds", "Clouds", "Overcast", "Mist", "Foggy", "Haze" ->{
-                binding.root.setBackgroundResource(R.drawable.colud_background)
+//                binding.root.setBackgroundResource(R.drawable.colud_background)
                 binding.lottieAnimationViewB.setAnimation(R.raw.cloud)
             }
 
-            "Light Rain", "Drizzle", "Moderate Rain", "Showers", "Heavy Rain" ->{
-                binding.root.setBackgroundResource(R.drawable.rain_background)
+            "Light Rain", "Drizzle", "Moderate Rain", "Showers", "Heavy Rain", "Rain" ->{
+//                binding.root.setBackgroundResource(R.color.transparent)
                 binding.lottieAnimationViewB.setAnimation(R.raw.rain)
             }
 
             "Light Snow", "Moderate Snow", "Heavy Snow", "Blizzard" ->{
-                binding.root.setBackgroundResource(R.drawable.snow_background)
+//                binding.root.setBackgroundResource(R.drawable.snow_background)
                 binding.lottieAnimationViewB.setAnimation(R.raw.snow)
             }
             else ->{
-                binding.root.setBackgroundResource(R.drawable.sunny_background)
-                binding.lottieAnimationViewB.setAnimation(R.raw.sun2)
+//                binding.root.setBackgroundResource(R.drawable.sunny_background)
+                binding.lottieAnimationViewB.setAnimation(R.raw.sun)
             }
 
         }
