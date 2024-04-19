@@ -1,17 +1,15 @@
 package com.example.weatherapp.fragments
 
 import android.content.Context
-import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.example.weatherapp.ApiInterface
+import com.example.weatherapp.data.ApiInterface
 import com.example.weatherapp.R
-import com.example.weatherapp.WeatherApp
-import com.example.weatherapp.databinding.ActivityMainBinding
+import com.example.weatherapp.data.WeatherApp
 import com.example.weatherapp.databinding.FragmentAdvanceWeatherBinding
 import retrofit2.Call
 import retrofit2.Callback
@@ -24,7 +22,6 @@ import java.util.Locale
 import java.util.TimeZone
 import android.os.Handler
 import android.os.Looper
-import com.example.weatherapp.databinding.FragmentBasicWeatherBinding
 
 
 class AdvanceWeatherFragment : Fragment() {
@@ -70,7 +67,7 @@ class AdvanceWeatherFragment : Fragment() {
     private fun fetachWeatherData(cityName:String, units:String) {
         val retrofit = Retrofit.Builder().addConverterFactory(GsonConverterFactory.create()).baseUrl("https://api.openweathermap.org/data/2.5/").build().create(
             ApiInterface::class.java)
-        val response = retrofit.getWeatherData(cityName,"bd04d1ce49301ed0175976c62138cd19",units)
+        val response = retrofit.getWeatherData(cityName,"pl","bd04d1ce49301ed0175976c62138cd19",units)
         response.enqueue(object : Callback<WeatherApp> {
             override fun onResponse(call: Call<WeatherApp>, response: Response<WeatherApp>) {
                 val responseBody = response.body()

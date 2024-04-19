@@ -6,32 +6,24 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import com.example.weatherapp.databinding.ActivityMainBinding
-import com.google.android.material.snackbar.Snackbar
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import java.sql.Timestamp
-import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
-import android.os.Handler
-import android.os.Looper
-import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.core.content.ContentProviderCompat.requireContext
+import android.widget.Toast
 import androidx.viewpager2.widget.ViewPager2
-import com.example.weatherapp.adapter.FragmentAdapter
 import com.example.weatherapp.adapter.FragmentPagedAdapter
+import com.example.weatherapp.data.ApiInterface
+import com.example.weatherapp.data.WeatherApp
+import com.example.weatherapp.data.WeatherData
 import com.example.weatherapp.databinding.FragmentBasicWeatherBinding
 import com.example.weatherapp.fragments.AdvanceWeatherFragment
-import com.example.weatherapp.fragments.BasicWeatherFragment
 import com.google.android.material.tabs.TabLayout
-import com.google.android.material.tabs.TabLayout.OnTabSelectedListener
-import java.util.TimeZone
+import com.google.gson.Gson
+import java.io.IOException
 
 class MainActivity : AppCompatActivity() {
     private lateinit var sharedPreferences: SharedPreferences
@@ -98,20 +90,71 @@ class MainActivity : AppCompatActivity() {
     private fun fetachWeatherData(cityName:String, units:String) {
         val retrofit = Retrofit.Builder().addConverterFactory(GsonConverterFactory.create()).baseUrl("https://api.openweathermap.org/data/2.5/").build().create(
             ApiInterface::class.java)
-        val response = retrofit.getWeatherData(cityName,"bd04d1ce49301ed0175976c62138cd19",units)
+        val response = retrofit.getWeatherData(cityName,"pl","bd04d1ce49301ed0175976c62138cd19",units)
         response.enqueue(object : Callback<WeatherApp> {
             override fun onResponse(call: Call<WeatherApp>, response: Response<WeatherApp>) {
                 val responseBody = response.body()
 
                 if (response.isSuccessful && responseBody != null){
-                    val condition = responseBody.weather.firstOrNull()?.main?: "unknown"
+                    val weatherData = WeatherData(
+                        temperature = responseBody.main.temp.toString(),
+                        humidity = responseBody.main.humidity.toString(),
+                        windSpeed = responseBody.wind.speed.toString(),
+                        windDeg = responseBody.wind.deg.toString(),
+                        sunRise = responseBody.sys.sunrise.toLong(),
+                        sunSet = responseBody.sys.sunset.toLong(),
+                        pressure = responseBody.main.pressure.toString(),
+                        condition = responseBody.weather.firstOrNull()?.main ?: "unknown",
+                        maxTemp = responseBody.main.temp_max.toString(),
+                        minTemp = responseBody.main.temp_min.toString(),
+                        desc = responseBody.weather.first().description,
+                        coordinates1 = String.format(Locale.getDefault(), "%.2f", responseBody.coord.lat.toString().toDouble()),
+                        coordinates2 = String.format(Locale.getDefault(), "%.2f", responseBody.coord.lon.toString().toDouble())
+                    )
+
+                    val gson = Gson()
+                    val json = gson.toJson(weatherData)
+
+                    try {
+                        val fos = openFileOutput("weather_data.json", Context.MODE_PRIVATE)
+                        fos.write(json.toByteArray())
+                        fos.close()
+                        Log.d("MainActivity", "Data saved to file")
+                    } catch (e: IOException) {
+                        e.printStackTrace()
+                    }
 
 
-                    changeImagsAccordingToWeatherCondition(condition)
+
+                    changeImagsAccordingToWeatherCondition(weatherData.condition)
                 }
             }
 
             override fun onFailure(call: Call<WeatherApp>, t: Throwable) {
+                t.printStackTrace()
+                runOnUiThread {
+                    Toast.makeText(applicationContext, "Location not found", Toast.LENGTH_SHORT).show()
+                }
+            }
+        })
+    }
+    private fun fetchNextDaysWeatherData(cityName:String, units:String){
+        val retrofit = Retrofit.Builder().addConverterFactory(GsonConverterFactory.create()).baseUrl("https://api.openweathermap.org/data/2.5/").build().create(
+            ApiInterface::class.java)
+        val response = retrofit.getNextDaysWeatherData(cityName,"bd04d1ce49301ed0175976c62138cd19",units)
+        response.enqueue(object : Callback<WeatherApp> {
+            override fun onResponse(call: Call<WeatherApp>, response: Response<WeatherApp>) {
+                val responseBody = response.body()
+
+                if (response.isSuccessful && responseBody != null){
+                    //val tmp = responseBody.
+                }
+            }
+            override fun onFailure(call: Call<WeatherApp>, t: Throwable) {
+                t.printStackTrace()
+                runOnUiThread {
+                    Toast.makeText(applicationContext, "Location not found", Toast.LENGTH_SHORT).show()
+                }
             }
         })
     }
