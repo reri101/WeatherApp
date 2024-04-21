@@ -202,8 +202,8 @@ class AdvanceWeatherFragment : Fragment() {
         }
         binding.lottieAnimationView.playAnimation()
     }
-    fun newInstance(cityName: String?): BasicWeatherFragment {
-        val fragment = BasicWeatherFragment()
+    fun newInstance(cityName: String?): AdvanceWeatherFragment {
+        val fragment = AdvanceWeatherFragment()
         val args = Bundle().apply {
             putString("cityName", cityName)
         }
