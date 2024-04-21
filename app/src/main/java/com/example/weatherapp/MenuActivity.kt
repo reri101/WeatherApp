@@ -27,7 +27,7 @@ class MenuActivity : AppCompatActivity() {
         sharedPreferences = getSharedPreferences("WeatherAppPrefs", MODE_PRIVATE)
         binding.switchCentigrade.setOnCheckedChangeListener{ _, isChecked ->
             val units = if (isChecked) "imperial" else "metric"
-            sharedPreferences.edit().putString("units", units).apply()
+            sharedPreferences.edit().putString("temperatureUnit", units).apply()
         }
 
 

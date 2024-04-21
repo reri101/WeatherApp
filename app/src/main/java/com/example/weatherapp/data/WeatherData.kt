@@ -1,6 +1,9 @@
 package com.example.weatherapp.data
 
+import com.example.weatherapp.dataND.NextDaysWeatherApp
+
 data class WeatherData(
+    val cityName: String,
     val temperature: String,
     val humidity: String,
     val windSpeed: String,
@@ -13,5 +16,6 @@ data class WeatherData(
     val minTemp: String,
     val desc: String,
     val coordinates1: String,
-    val coordinates2: String
+    val coordinates2: String,
+   // val nextDays: NextDaysWeatherApp
 )

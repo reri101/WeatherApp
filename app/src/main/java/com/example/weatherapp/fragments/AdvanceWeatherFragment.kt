@@ -22,19 +22,32 @@ import java.util.Locale
 import java.util.TimeZone
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
+import com.example.weatherapp.data.WeatherData
+import com.google.gson.Gson
+import java.io.IOException
 
 
 class AdvanceWeatherFragment : Fragment() {
     private lateinit var sharedPreferences: SharedPreferences
     private lateinit var binding: FragmentAdvanceWeatherBinding
+    private lateinit var cityName: String
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         binding = FragmentAdvanceWeatherBinding.inflate(inflater, container, false)
+        cityName = arguments?.getString("cityName").toString()
+        if(cityName == "")
+            cityName="Warsaw"
         setUpWeatherInfo()
         return binding.root
+    }
+
+    override fun onResume() {
+        super.onResume()
+        setUpWeatherInfo()
     }
 
 
@@ -43,8 +56,8 @@ class AdvanceWeatherFragment : Fragment() {
             "WeatherAppPrefs",
             Context.MODE_PRIVATE
         )
-        val units = sharedPreferences.getString("units", "metric") ?: "metric"
-        fetachWeatherData("Warsaw", units)
+        val units = sharedPreferences.getString("temperatureUnit", "metric") ?: "metric"
+        fetachWeatherData(cityName, units)
 
         val handler = Handler(Looper.getMainLooper())
         val runnableCode = object : Runnable {
@@ -73,40 +86,63 @@ class AdvanceWeatherFragment : Fragment() {
                 val responseBody = response.body()
 
                 if (response.isSuccessful && responseBody != null){
-                    val temperature = responseBody.main.temp.toString()
-                    val humidity = responseBody.main.humidity.toString()
-                    val windSpeed = responseBody.wind.speed.toString()
-                    val windDeg = responseBody.wind.deg.toString()
-                    val sunRise = responseBody.sys.sunrise.toLong()
-                    val sunSet = responseBody.sys.sunset.toLong()
-                    val pressure = responseBody.main.pressure.toString()
-                    val condition = responseBody.weather.firstOrNull()?.main?: "unknown"
-                    val maxTemp = responseBody.main.temp_max.toString()
-                    val minTemp = responseBody.main.temp_min.toString()
-                    val desc = responseBody.weather.first().description;
-                    var coordinates1= responseBody.coord.lat.toString()
-                    coordinates1 = String.format(Locale.getDefault(), "%.2f", coordinates1.toDouble())
-                    var coordinates2= responseBody.coord.lon.toString()
-                    coordinates2 = String.format(Locale.getDefault(), "%.2f", coordinates2.toDouble())
+                    val cName = cityName
+                    val weatherData = WeatherData(
+                        cityName = cityName,
+                        temperature = responseBody.main.temp.toString(),
+                        humidity = responseBody.main.humidity.toString(),
+                        windSpeed = responseBody.wind.speed.toString(),
+                        windDeg = responseBody.wind.deg.toString(),
+                        sunRise = responseBody.sys.sunrise.toLong(),
+                        sunSet = responseBody.sys.sunset.toLong(),
+                        pressure = responseBody.main.pressure.toString(),
+                        condition = responseBody.weather.firstOrNull()?.main ?: "unknown",
+                        maxTemp = responseBody.main.temp_max.toString(),
+                        minTemp = responseBody.main.temp_min.toString(),
+                        desc = responseBody.weather.first().description,
+                        coordinates1 = String.format(
+                            Locale.getDefault(),
+                            "%.2f",
+                            responseBody.coord.lat.toString().toDouble()
+                        ),
+                        coordinates2 = String.format(
+                            Locale.getDefault(),
+                            "%.2f",
+                            responseBody.coord.lon.toString().toDouble()
+                        )
+                    )
+
+                    val gson = Gson()
+                    val json = gson.toJson(weatherData)
+                    val cityNameLower= cityName.lowercase()
+
+                    try {
+                        val fos = requireContext().openFileOutput("weather_data_$cityNameLower.json", Context.MODE_PRIVATE)
+                        fos.write(json.toByteArray())
+                        fos.close()
+                        Log.d("MainActivity", "Data saved to file")
+                    } catch (e: IOException) {
+                        e.printStackTrace()
+                    }
 
 
 
-                    binding.temperature.text = binding.temperature.text.toString().replace("00:00",temperature)
-                    binding.weatherType.text = binding.weatherType.text.toString().replace("Sunny",condition)
-                    binding.humidity.text = binding.humidity.text.toString().replace("000",humidity)
-                    binding.windSpeed.text = binding.windSpeed.text.toString().replace("0.00",windSpeed)
-                    binding.sunrise.text = time(sunRise)
-                    binding.sunset.text = time(sunSet)
-                    binding.pressure.text = binding.pressure.text.toString().replace("0000",pressure)
-                    binding.weatherCondition.text = binding.weatherCondition.text.toString().replace("00:00",windDeg)
-                    binding.maxMinTemp.text = binding.maxMinTemp.text.toString().replace("Max",maxTemp)
-                    binding.maxMinTemp.text = binding.maxMinTemp.text.toString().replace("Min",minTemp)
+                    binding.temperature.text = binding.temperature.text.toString().replace("00:00",weatherData.temperature)
+                    binding.weatherType.text = binding.weatherType.text.toString().replace("Sunny",weatherData.condition)
+                    binding.humidity.text = binding.humidity.text.toString().replace("000",weatherData.humidity)
+                    binding.windSpeed.text = binding.windSpeed.text.toString().replace("0.00",weatherData.windSpeed)
+                    binding.sunrise.text = time(weatherData.sunRise)
+                    binding.sunset.text = time(weatherData.sunSet)
+                    binding.pressure.text = binding.pressure.text.toString().replace("0000",weatherData.pressure)
+                    binding.weatherCondition.text = binding.weatherCondition.text.toString().replace("00:00",weatherData.windDeg)
+                    binding.maxMinTemp.text = binding.maxMinTemp.text.toString().replace("Max",weatherData.maxTemp)
+                    binding.maxMinTemp.text = binding.maxMinTemp.text.toString().replace("Min",weatherData.minTemp)
                     binding.dayOfDate.text=dayName(System.currentTimeMillis())
                     binding.date.text=date(System.currentTimeMillis())
-                    binding.description.text=desc
-                    binding.cityName.text= binding.cityName.text.toString().plus(cityName)
-                    binding.coordinator.text = binding.coordinator.text.toString().replace("00",coordinates1)
-                    binding.coordinator.text = binding.coordinator.text.toString().replace("11",coordinates2)
+                    binding.description.text=weatherData.desc
+                    binding.cityName.text= " $cName"
+                    binding.coordinator.text = binding.coordinator.text.toString().replace("00",weatherData.coordinates1)
+                    binding.coordinator.text = binding.coordinator.text.toString().replace("11",weatherData.coordinates2)
 
                     val fahrenheit = getString(R.string.fahrenheitDegree)
                     val celsjusz = getString(R.string.celsjuszDegree)
@@ -118,7 +154,7 @@ class AdvanceWeatherFragment : Fragment() {
                         binding.maxMinTemp.text = binding.maxMinTemp.text.toString().replace(fahrenheit,celsjusz)
                     }
 
-                    changeImagsAccordingToWeatherCondition(condition)
+                    changeImagsAccordingToWeatherCondition(weatherData.condition)
                     //Log.d("TAG", "onResponse: $windSpeed")
 
                 }
@@ -165,5 +201,13 @@ class AdvanceWeatherFragment : Fragment() {
 
         }
         binding.lottieAnimationView.playAnimation()
+    }
+    fun newInstance(cityName: String?): BasicWeatherFragment {
+        val fragment = BasicWeatherFragment()
+        val args = Bundle().apply {
+            putString("cityName", cityName)
+        }
+        fragment.arguments = args
+        return fragment
     }
 }

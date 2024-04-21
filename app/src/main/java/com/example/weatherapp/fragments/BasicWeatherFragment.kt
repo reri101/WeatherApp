@@ -12,6 +12,7 @@ import android.view.View
 import android.view.ViewGroup
 import com.example.weatherapp.data.ApiInterface
 import com.example.weatherapp.R
+import com.example.weatherapp.adapter.FragmentPagedAdapter
 import com.example.weatherapp.data.WeatherApp
 import com.example.weatherapp.databinding.ActivityMainBinding
 import com.example.weatherapp.databinding.FragmentBasicWeatherBinding
@@ -31,6 +32,7 @@ class BasicWeatherFragment : Fragment() {
     private lateinit  var binding: FragmentBasicWeatherBinding
     private lateinit  var bindingMain: ActivityMainBinding
     private val handler = Handler(Looper.getMainLooper())
+    private lateinit var cityName: String
 
 
     override fun onCreateView(
@@ -39,20 +41,35 @@ class BasicWeatherFragment : Fragment() {
     ): View? {
         bindingMain = ActivityMainBinding.inflate(layoutInflater)
         binding = FragmentBasicWeatherBinding.inflate(inflater, container, false)
+        cityName = arguments?.getString("cityName").toString()
+        if(cityName == "")
+            cityName="Warsaw"
         setUpWeatherInfo()
         return binding.root
+    }
 
+    override fun onResume() {
+        super.onResume()
+        val units = sharedPreferences.getString("temperatureUnit", "metric") ?: "metric"
+        fetachWeatherData(cityName, units)
     }
 
 
 
     fun setUpWeatherInfo(){
-        sharedPreferences = requireContext().getSharedPreferences(
-            "WeatherAppPrefs",
-            Context.MODE_PRIVATE
-        )
-        val units = sharedPreferences.getString("units", "metric") ?: "metric"
-        fetachWeatherData("Warsaw", units)
+        sharedPreferences = requireContext().getSharedPreferences("WeatherAppPrefs", Context.MODE_PRIVATE)
+        val units = sharedPreferences.getString("temperatureUnit", "metric") ?: "metric"
+
+        // Sprawdź, czy dane o pogodzie są już zapisane w pliku JSON
+        val shouldFetchFromNetwork = shouldFetchWeatherFromNetwork()
+
+        if (shouldFetchFromNetwork) {
+            // Pobierz dane o pogodzie z sieci
+            fetachWeatherData("Warsaw", units)
+        } else {
+            // Pobierz dane o pogodzie z pliku JSON
+            //fetchWeatherDataFromFile()
+        }
 
         val handler = Handler(Looper.getMainLooper())
         val runnableCode = object : Runnable {
@@ -79,6 +96,7 @@ class BasicWeatherFragment : Fragment() {
                 val responseBody = response.body()
 
                 if (response.isSuccessful && responseBody != null){
+                    val cName = cityName
                     val temperature = responseBody.main.temp.toString()
                     val condition = responseBody.weather.firstOrNull()?.main?: "unknown"
                     val maxTemp = responseBody.main.temp_max.toString()
@@ -108,7 +126,7 @@ class BasicWeatherFragment : Fragment() {
                     binding.dayOfDateB.text=dayName(System.currentTimeMillis())
                     binding.dateB.text=date(System.currentTimeMillis())
                     binding.descriptionB.text=desc
-                    binding.cityNameB.text= binding.cityNameB.text.toString().plus(cityName)
+                    binding.cityNameB.text= " $cName"
                     binding.coordinatorB.text = binding.coordinatorB.text.toString().replace("00",coordinates1)
                     binding.coordinatorB.text = binding.coordinatorB.text.toString().replace("11",coordinates2)
 
@@ -133,6 +151,16 @@ class BasicWeatherFragment : Fragment() {
             override fun onFailure(call: Call<WeatherApp>, t: Throwable) {
             }
         })
+    }
+    private fun shouldFetchWeatherFromNetwork(): Boolean {
+        val lastRefreshTime = sharedPreferences.getLong("lastRefreshTime", 0L)
+        val refreshFrequency = sharedPreferences.getInt("refreshFrequency", 6)
+
+        val currentTime = System.currentTimeMillis()
+        val elapsedTimeSinceLastRefresh = currentTime - lastRefreshTime
+        val elapsedTimeInHours = elapsedTimeSinceLastRefresh / (1000 * 60 * 60)
+
+        return elapsedTimeInHours >= refreshFrequency
     }
     private fun dayName(timestamp: Long): String{
         val sdf = SimpleDateFormat("EEEE", Locale.getDefault())
@@ -177,4 +205,15 @@ class BasicWeatherFragment : Fragment() {
         }
         binding.lottieAnimationViewB.playAnimation()
     }
+
+    //companion object {
+        fun newInstance(cityName: String?): BasicWeatherFragment {
+            val fragment = BasicWeatherFragment()
+            val args = Bundle().apply {
+                putString("cityName", cityName)
+            }
+            fragment.arguments = args
+            return fragment
+        }
+    //}
 }
