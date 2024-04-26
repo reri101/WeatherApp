@@ -4,7 +4,8 @@ import com.example.weatherapp.dataND.NextDaysWeatherApp
 
 data class WeatherData(
     val cityName: String,
-    val temperature: String,
+    val temperatureC: String,
+    val temperatureF: String,
     val humidity: String,
     val windSpeed: String,
     val windDeg: String,

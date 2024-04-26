@@ -3,6 +3,9 @@ package com.example.weatherapp
 import SettingsFragment
 import android.content.Context
 import android.content.SharedPreferences
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -26,6 +29,7 @@ import com.example.weatherapp.data.WeatherApp
 import com.example.weatherapp.data.WeatherData
 import com.example.weatherapp.databinding.FragmentBasicWeatherBinding
 import com.example.weatherapp.fragments.AdvanceWeatherFragment
+import com.example.weatherapp.fragments.BasicWeatherFragment
 import com.example.weatherapp.fragments.FavouriteListFragment
 import com.example.weatherapp.fragments.NextDaysWeatherFragment
 import com.example.weatherapp.fragments.WeatherFragment
@@ -35,7 +39,7 @@ import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), BasicWeatherFragment.WeatherConditionListener {
     private lateinit var sharedPreferences: SharedPreferences
     private val binding: ActivityMainBinding by lazy {
         ActivityMainBinding.inflate(layoutInflater)
@@ -45,15 +49,17 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(binding.root)
 
+        sharedPreferences = getSharedPreferences("WeatherAppPrefs",Context.MODE_PRIVATE)
 
-        sharedPreferences = getSharedPreferences(
-            "WeatherAppPrefs",
-            Context.MODE_PRIVATE
-        )
-        val units = sharedPreferences.getString("temperatureUnit", "metric") ?: "metric"
-        fetachWeatherData("Warsaw", units)
+        if (!isOnline()) {
+            Toast.makeText(this, "Brak internetu!\nDane pogodowe mogą być nieaktualne", Toast.LENGTH_LONG).show()
+        }
+        else{
+            val units = sharedPreferences.getString("temperatureUnit", "metric") ?: "metric"
+            var cityName = sharedPreferences.getString("city_setted", "Warsaw") ?: "Warsaw"
+            fetachWeatherData(cityName, units)
+        }
 
-        val fragmentManager: FragmentManager = supportFragmentManager
         val favouriteListFragment = FavouriteListFragment()
         val settingsFragment = SettingsFragment()
         val weatherFragment = WeatherFragment()
@@ -69,6 +75,7 @@ class MainActivity : AppCompatActivity() {
                     replaceFragment(favouriteListFragment)
                 }else if(position==1){
                     replaceFragment(weatherFragment)
+                    //weatherFragment.refreshData(cityName)
                 }else if(position==2){
                     replaceFragment(settingsFragment)
                 } else{
@@ -78,6 +85,25 @@ class MainActivity : AppCompatActivity() {
             override fun onTabUnselected(tab: TabLayout.Tab) {}
             override fun onTabReselected(tab: TabLayout.Tab) {}
         })
+    }
+    private fun isOnline(): Boolean {
+        val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val network = connectivityManager.activeNetwork ?: return false
+            val activeNetwork = connectivityManager.getNetworkCapabilities(network) ?: return false
+            return when {
+                activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
+                activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> true
+                // Możesz dodać inne typy transportu, jeśli są potrzebne
+                else -> false
+            }
+        } else {
+            val networkInfo = connectivityManager.activeNetworkInfo
+            return networkInfo != null && networkInfo.isConnected
+        }
+    }
+    override fun onWeatherConditionChanged(conditions: String) {
+        changeImagsAccordingToWeatherCondition(conditions)
     }
 
     private fun replaceFragment(fragment: Fragment) {
@@ -103,9 +129,17 @@ class MainActivity : AppCompatActivity() {
                     val responseBody = response.body()
 
                     if (response.isSuccessful && responseBody != null) {
+                        var temperatureC = responseBody.main.temp
+                        var temperatureF = (temperatureC * 9 / 5 + 32)
+                        if(units == "imperial"){
+                            temperatureF = responseBody.main.temp
+                            temperatureC = (temperatureF - 32) * 5 / 9
+                        }
+
                         val weatherData = WeatherData(
                             cityName = cityName,
-                            temperature = responseBody.main.temp.toString(),
+                            temperatureC = temperatureC.toString(),
+                            temperatureF = temperatureF.toString(),
                             humidity = responseBody.main.humidity.toString(),
                             windSpeed = responseBody.wind.speed.toString(),
                             windDeg = responseBody.wind.deg.toString(),
@@ -116,16 +150,8 @@ class MainActivity : AppCompatActivity() {
                             maxTemp = responseBody.main.temp_max.toString(),
                             minTemp = responseBody.main.temp_min.toString(),
                             desc = responseBody.weather.first().description,
-                            coordinates1 = String.format(
-                                Locale.getDefault(),
-                                "%.2f",
-                                responseBody.coord.lat.toString().toDouble()
-                            ),
-                            coordinates2 = String.format(
-                                Locale.getDefault(),
-                                "%.2f",
-                                responseBody.coord.lon.toString().toDouble()
-                            )
+                            coordinates1 = String.format(Locale.getDefault(), "%.2f", responseBody.coord.lat.toString().toDouble()),
+                            coordinates2 = String.format(Locale.getDefault(), "%.2f", responseBody.coord.lon.toString().toDouble())
                         )
 
                         val gson = Gson()

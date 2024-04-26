@@ -6,34 +6,38 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.example.weatherapp.data.ApiInterface
+import androidx.fragment.app.Fragment
 import com.example.weatherapp.R
 import com.example.weatherapp.adapter.FragmentPagedAdapter
+import com.example.weatherapp.data.ApiInterface
 import com.example.weatherapp.data.WeatherApp
+import com.example.weatherapp.data.WeatherData
 import com.example.weatherapp.databinding.ActivityMainBinding
 import com.example.weatherapp.databinding.FragmentBasicWeatherBinding
+import com.google.gson.Gson
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.io.BufferedReader
+import java.io.IOException
+import java.io.InputStreamReader
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
-
 class BasicWeatherFragment : Fragment() {
-    private lateinit var sharedPreferences: SharedPreferences
-    private lateinit  var binding: FragmentBasicWeatherBinding
-    private lateinit  var bindingMain: ActivityMainBinding
-    private val handler = Handler(Looper.getMainLooper())
-    private lateinit var cityName: String
 
+    private lateinit var sharedPreferences: SharedPreferences
+    private lateinit var binding: FragmentBasicWeatherBinding
+    private lateinit var bindingMain: ActivityMainBinding
+    private lateinit var cityName: String
+    private val handler = Handler(Looper.getMainLooper())
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -41,9 +45,9 @@ class BasicWeatherFragment : Fragment() {
     ): View? {
         bindingMain = ActivityMainBinding.inflate(layoutInflater)
         binding = FragmentBasicWeatherBinding.inflate(inflater, container, false)
-        cityName = arguments?.getString("cityName").toString()
-        if(cityName == "")
-            cityName="Warsaw"
+        sharedPreferences = requireContext().getSharedPreferences("WeatherAppPrefs", Context.MODE_PRIVATE)
+        cityName = sharedPreferences.getString("city_setted", "Warsaw") ?: "Warsaw"
+        Log.d("citynamee", "cnn $cityName")
         setUpWeatherInfo()
         return binding.root
     }
@@ -51,27 +55,24 @@ class BasicWeatherFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         val units = sharedPreferences.getString("temperatureUnit", "metric") ?: "metric"
+        cityName = sharedPreferences.getString("city_setted", "Warsaw") ?: "Warsaw"
+        Log.d("citynamee", "cn $cityName")
         fetachWeatherData(cityName, units)
     }
 
-
-
-    fun setUpWeatherInfo(){
-        sharedPreferences = requireContext().getSharedPreferences("WeatherAppPrefs", Context.MODE_PRIVATE)
+    private fun setUpWeatherInfo() {
         val units = sharedPreferences.getString("temperatureUnit", "metric") ?: "metric"
+        cityName = sharedPreferences.getString("city_setted", "Warsaw") ?: "Warsaw"
 
-        // Sprawdź, czy dane o pogodzie są już zapisane w pliku JSON
         val shouldFetchFromNetwork = shouldFetchWeatherFromNetwork()
-
+        Log.d("citynamee", ":x $cityName")
+        Log.d("shouldFetchFromNetwork", ": $shouldFetchFromNetwork")
         if (shouldFetchFromNetwork) {
-            // Pobierz dane o pogodzie z sieci
-            fetachWeatherData("Warsaw", units)
-        } else {
-            // Pobierz dane o pogodzie z pliku JSON
-            //fetchWeatherDataFromFile()
+            fetachWeatherData(cityName, units)
+        }else{
+            loadWeatherDataFromFile(cityName,units)
         }
 
-        val handler = Handler(Looper.getMainLooper())
         val runnableCode = object : Runnable {
             override fun run() {
                 updateCurrentTime()
@@ -80,6 +81,7 @@ class BasicWeatherFragment : Fragment() {
         }
         handler.post(runnableCode)
     }
+
     private fun updateCurrentTime() {
         val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
         sdf.timeZone = TimeZone.getDefault()
@@ -87,64 +89,52 @@ class BasicWeatherFragment : Fragment() {
         binding.timeB.text = currentTime
     }
 
-    private fun fetachWeatherData(cityName:String, units:String) {
-        val retrofit = Retrofit.Builder().addConverterFactory(GsonConverterFactory.create()).baseUrl("https://api.openweathermap.org/data/2.5/").build().create(
-            ApiInterface::class.java)
-        val response = retrofit.getWeatherData(cityName,"pl","bd04d1ce49301ed0175976c62138cd19",units)
+    private fun fetachWeatherData(cityName: String, units: String) {
+        Log.d("citynamee", ": $cityName")
+        val retrofit = Retrofit.Builder()
+            .addConverterFactory(GsonConverterFactory.create())
+            .baseUrl("https://api.openweathermap.org/data/2.5/")
+            .build()
+            .create(ApiInterface::class.java)
+        val response = retrofit.getWeatherData(cityName, "pl", "bd04d1ce49301ed0175976c62138cd19", units)
         response.enqueue(object : Callback<WeatherApp> {
             override fun onResponse(call: Call<WeatherApp>, response: Response<WeatherApp>) {
                 val responseBody = response.body()
 
-                if (response.isSuccessful && responseBody != null){
-                    val cName = cityName
-                    val temperature = responseBody.main.temp.toString()
-                    val condition = responseBody.weather.firstOrNull()?.main?: "unknown"
-                    val maxTemp = responseBody.main.temp_max.toString()
-                    val minTemp = responseBody.main.temp_min.toString()
-                    val desc = responseBody.weather.first().description;
-                    var coordinates1= responseBody.coord.lat.toString()
-                    coordinates1 = String.format(Locale.getDefault(), "%.2f", coordinates1.toDouble())
-                    var coordinates2= responseBody.coord.lon.toString()
-                    coordinates2 = String.format(Locale.getDefault(), "%.2f", coordinates2.toDouble())
-
-                    var test= binding.temperatureB.text
-                    Log.d("BasicWeatherFragment", "Fetching weather data for coordinates $test")
-
-
-
-
-                    handler.post {
-                    binding.temperatureB.text = binding.temperatureB.text.toString().replace("00:00",temperature)
-                    test= binding.temperatureB.text
-                    Log.d("BasicWeatherFragmentXXX", "Fetching weather data for coordinates $test")
-                    binding.temperatureB.invalidate()
-
-
-                    binding.weatherTypeB.text = binding.weatherTypeB.text.toString().replace("Sunny",condition)
-                    binding.maxMinTempB.text = binding.maxMinTempB.text.toString().replace("Max",maxTemp)
-                    binding.maxMinTempB.text = binding.maxMinTempB.text.toString().replace("Min",minTemp)
-                    binding.dayOfDateB.text=dayName(System.currentTimeMillis())
-                    binding.dateB.text=date(System.currentTimeMillis())
-                    binding.descriptionB.text=desc
-                    binding.cityNameB.text= " $cName"
-                    binding.coordinatorB.text = binding.coordinatorB.text.toString().replace("00",coordinates1)
-                    binding.coordinatorB.text = binding.coordinatorB.text.toString().replace("11",coordinates2)
-
-                    val fahrenheit = getString(R.string.fahrenheitDegree)
-                    val celsjusz = getString(R.string.celsjuszDegree)
-                    if(units=="imperial"){
-                        binding.temperatureB.text = binding.temperatureB.text.toString().replace(celsjusz,fahrenheit)
-                        binding.maxMinTempB.text = binding.maxMinTempB.text.toString().replace(celsjusz,fahrenheit)
-                    }else{
-                        binding.temperatureB.text = binding.temperatureB.text.toString().replace(fahrenheit,celsjusz)
-                        binding.maxMinTempB.text = binding.maxMinTempB.text.toString().replace(fahrenheit,celsjusz)
-                    }
+                if (response.isSuccessful && responseBody != null) {
+                    var temperatureC = responseBody.main.temp
+                    var temperatureF = (temperatureC * 9 / 5 + 32)
+                    if(units == "imperial"){
+                        temperatureF = responseBody.main.temp
+                        temperatureC = (temperatureF - 32) * 5 / 9
                     }
 
-                    changeImagsAccordingToWeatherCondition(condition)
-                    //Log.d("TAG", "onResponse: $windSpeed")
+                    val weatherData = WeatherData(
+                        cityName = cityName,
+                        temperatureC = temperatureC.toString(),
+                        temperatureF = temperatureF.toString(),
+                        humidity = responseBody.main.humidity.toString(),
+                        windSpeed = responseBody.wind.speed.toString(),
+                        windDeg = responseBody.wind.deg.toString(),
+                        sunRise = responseBody.sys.sunrise.toLong(),
+                        sunSet = responseBody.sys.sunset.toLong(),
+                        pressure = responseBody.main.pressure.toString(),
+                        condition = responseBody.weather.firstOrNull()?.main ?: "unknown",
+                        maxTemp = responseBody.main.temp_max.toString(),
+                        minTemp = responseBody.main.temp_min.toString(),
+                        desc = responseBody.weather.first().description,
+                        coordinates1 = String.format(Locale.getDefault(), "%.2f", responseBody.coord.lat.toString().toDouble()),
+                        coordinates2 = String.format(Locale.getDefault(), "%.2f", responseBody.coord.lon.toString().toDouble())
+                    )
 
+                    saveWeatherDataToFile(cityName, weatherData)
 
+                    val editor = sharedPreferences.edit()
+                    editor.putLong("lastRefreshTime_x"+cityName, System.currentTimeMillis())
+                    Log.d("shouldFetchFromNetwork", ":1 lastRefreshTime_x"+cityName)
+                    editor.apply()
+
+                    updateUI(weatherData,units)
                 }
             }
 
@@ -152,17 +142,103 @@ class BasicWeatherFragment : Fragment() {
             }
         })
     }
-    private fun shouldFetchWeatherFromNetwork(): Boolean {
-        val lastRefreshTime = sharedPreferences.getLong("lastRefreshTime", 0L)
-        val refreshFrequency = sharedPreferences.getInt("refreshFrequency", 6)
+    private fun loadWeatherDataFromFile(cityName: String, units: String) {
+        val fileName = cityName+"_bas.json"
+        try {
+            val fis = requireContext().openFileInput(fileName)
+            val isr = InputStreamReader(fis)
+            val bufferedReader = BufferedReader(isr)
+            val sb = StringBuilder()
+            var line: String?
+            while (bufferedReader.readLine().also { line = it } != null) {
+                sb.append(line)
+            }
+            fis.close()
+            isr.close()
+            // Konwertuj dane JSON na obiekt WeatherData
+            val gson = Gson()
+            val weatherData = gson.fromJson(sb.toString(), WeatherData::class.java)
+            // Aktualizuj interfejs użytkownika z danymi z pliku JSON
+            updateUI(weatherData, units)
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+    }
+    private fun saveWeatherDataToFile(cityName: String, weatherData: WeatherData) {
+        val gson = Gson()
+        val json = gson.toJson(weatherData)
+        val fileName = cityName+"_bas.json"
+        try {
+            val fos = requireContext().openFileOutput(fileName, Context.MODE_PRIVATE)
+            fos.write(json.toByteArray())
+            fos.close()
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+    }
 
+    private fun updateUI(weatherData: WeatherData,units: String) {
+        binding.temperatureB.text = binding.temperatureB.text.toString().replace("00:00", weatherData.temperatureC)
+        binding.weatherTypeB.text = binding.weatherTypeB.text.toString().replace("Sunny", weatherData.condition)
+        binding.maxMinTempB.text = binding.maxMinTempB.text.toString().replace("Max", weatherData.maxTemp)
+        binding.maxMinTempB.text = binding.maxMinTempB.text.toString().replace("Min", weatherData.minTemp)
+        binding.dayOfDateB.text = dayName(System.currentTimeMillis())
+        binding.dateB.text = date(System.currentTimeMillis())
+        binding.descriptionB.text = weatherData.desc
+        binding.cityNameB.text = " $cityName"
+        binding.coordinatorB.text = binding.coordinatorB.text.toString().replace("00", weatherData.coordinates1)
+        binding.coordinatorB.text = binding.coordinatorB.text.toString().replace("11", weatherData.coordinates2)
+
+        val fahrenheit = getString(R.string.fahrenheitDegree)
+        val celsjusz = getString(R.string.celsjuszDegree)
+        if (units == "imperial") {
+            binding.temperatureB.text = binding.temperatureB.text.toString().replace("00:00", weatherData.temperatureF)
+            binding.temperatureB.text = binding.temperatureB.text.toString().replace(celsjusz, fahrenheit)
+            binding.maxMinTempB.text = binding.maxMinTempB.text.toString().replace(celsjusz, fahrenheit)
+        } else {
+            binding.temperatureB.text = binding.temperatureB.text.toString().replace(fahrenheit, celsjusz)
+            binding.maxMinTempB.text = binding.maxMinTempB.text.toString().replace(fahrenheit, celsjusz)
+        }
+
+        (activity as? WeatherConditionListener)?.onWeatherConditionChanged(weatherData.condition)
+        changeImagsAccordingToWeatherCondition(weatherData.condition)
+    }
+
+    private fun changeImagsAccordingToWeatherCondition(conditions: String){
+        when(conditions){
+            "Clear Sky", "Sunny", "Clear" ->{
+                binding.lottieAnimationViewB.setAnimation(R.raw.sun)
+            }
+
+            "Partly Clouds", "Clouds", "Overcast", "Mist", "Foggy", "Haze" ->{
+                binding.lottieAnimationViewB.setAnimation(R.raw.cloud)
+            }
+
+            "Light Rain", "Drizzle", "Moderate Rain", "Showers", "Heavy Rain", "Rain" ->{
+                binding.lottieAnimationViewB.setAnimation(R.raw.rain)
+            }
+
+            "Light Snow", "Moderate Snow", "Heavy Snow", "Blizzard" ->{
+                binding.lottieAnimationViewB.setAnimation(R.raw.snow)
+            }
+            else ->{
+                binding.lottieAnimationViewB.setAnimation(R.raw.sun)
+            }
+        }
+        binding.lottieAnimationViewB.playAnimation()
+    }
+
+    private fun shouldFetchWeatherFromNetwork(): Boolean {
+        val lastRefreshTime = sharedPreferences.getLong("lastRefreshTime_x"+cityName, 0L)
+        Log.d("shouldFetchFromNetwork", ": lastRefreshTime_x"+cityName)
+        val refreshFrequency = sharedPreferences.getInt("refreshFrequency", 6)
         val currentTime = System.currentTimeMillis()
         val elapsedTimeSinceLastRefresh = currentTime - lastRefreshTime
         val elapsedTimeInHours = elapsedTimeSinceLastRefresh / (1000 * 60 * 60)
-
         return elapsedTimeInHours >= refreshFrequency
     }
-    private fun dayName(timestamp: Long): String{
+
+    private fun dayName(timestamp: Long): String {
         val sdf = SimpleDateFormat("EEEE", Locale.getDefault())
         return sdf.format((Date()))
     }
@@ -171,49 +247,10 @@ class BasicWeatherFragment : Fragment() {
         val sdf = SimpleDateFormat("dd MMMM yyyy", Locale.getDefault())
         return sdf.format((Date()))
     }
-    private fun time(timestamp: Long): String {
-        val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
-        return sdf.format((Date(timestamp*1000)))
+
+    interface WeatherConditionListener {
+        fun onWeatherConditionChanged(conditions: String)
     }
 
-    private fun changeImagsAccordingToWeatherCondition(conditions: String){
-        when(conditions){
-            "Clear Sky", "Sunny", "Clear" ->{
-//                binding.root.setBackgroundResource(R.drawable.sunny_background)
-                binding.lottieAnimationViewB.setAnimation(R.raw.sun)
-            }
 
-            "Partly Clouds", "Clouds", "Overcast", "Mist", "Foggy", "Haze" ->{
-//                binding.root.setBackgroundResource(R.drawable.colud_background)
-                binding.lottieAnimationViewB.setAnimation(R.raw.cloud)
-            }
-
-            "Light Rain", "Drizzle", "Moderate Rain", "Showers", "Heavy Rain", "Rain" ->{
-//                binding.root.setBackgroundResource(R.color.transparent)
-                binding.lottieAnimationViewB.setAnimation(R.raw.rain)
-            }
-
-            "Light Snow", "Moderate Snow", "Heavy Snow", "Blizzard" ->{
-//                binding.root.setBackgroundResource(R.drawable.snow_background)
-                binding.lottieAnimationViewB.setAnimation(R.raw.snow)
-            }
-            else ->{
-//                binding.root.setBackgroundResource(R.drawable.sunny_background)
-                binding.lottieAnimationViewB.setAnimation(R.raw.sun)
-            }
-
-        }
-        binding.lottieAnimationViewB.playAnimation()
-    }
-
-    //companion object {
-        fun newInstance(cityName: String?): BasicWeatherFragment {
-            val fragment = BasicWeatherFragment()
-            val args = Bundle().apply {
-                putString("cityName", cityName)
-            }
-            fragment.arguments = args
-            return fragment
-        }
-    //}
 }

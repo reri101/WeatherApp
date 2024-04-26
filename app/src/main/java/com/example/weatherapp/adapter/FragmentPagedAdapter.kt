@@ -13,7 +13,7 @@ import com.example.weatherapp.fragments.WeatherFragment
 
 class FragmentPagedAdapter(
     fragmentActivity: FragmentActivity,
-    private val cityName: String?
+    private var cityName: String?
 ) : FragmentStateAdapter(fragmentActivity) {
     override fun getItemCount(): Int {
         return 3
@@ -22,12 +22,13 @@ class FragmentPagedAdapter(
     override fun createFragment(position: Int): Fragment {
         Log.d("createFragment", "XXXXX ")
 
+        Log.d("citynamee", "cn0 $cityName")
         return if (position == 0)
-            BasicWeatherFragment().newInstance(cityName)
+            BasicWeatherFragment()
         else if (position == 1)
             AdvanceWeatherFragment().newInstance(cityName)
         else{
-            NextDaysWeatherFragment()
+            NextDaysWeatherFragment().newInstance(cityName)
         }
 
         Log.d("createFragment", "XXXXX-- ")

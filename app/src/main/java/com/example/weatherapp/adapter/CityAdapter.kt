@@ -1,11 +1,14 @@
 package com.example.weatherapp.adapter
 
+import android.content.Context
+import android.content.SharedPreferences
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
+import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.recyclerview.widget.RecyclerView
 import com.example.weatherapp.R
 import java.util.ArrayList
@@ -13,6 +16,7 @@ import java.util.ArrayList
 class CityAdapter(private val listener: OnDeleteClickListener, private val cities: MutableList<String> = mutableListOf()) : RecyclerView.Adapter<CityAdapter.ViewHolder>() {
 
     private lateinit var weatherClickListener: OnWeatherClickListener
+    private lateinit var sharedPreferences: SharedPreferences
 
     fun setOnWeatherClickListener(listener: OnWeatherClickListener) {
         this.weatherClickListener = listener
@@ -23,6 +27,7 @@ class CityAdapter(private val listener: OnDeleteClickListener, private val citie
     }
 
     interface OnWeatherClickListener {
+
         fun onWeatherClick(position: Int)
     }
 
@@ -84,6 +89,7 @@ class CityAdapter(private val listener: OnDeleteClickListener, private val citie
         init {
             // Inicjalizacja przycisku "Pogoda" i dodanie obsługi kliknięcia
             itemView.findViewById<Button>(R.id.weatherButton).setOnClickListener {
+
                 val position = adapterPosition
                 if (position != RecyclerView.NO_POSITION) {
                     weatherClickListener.onWeatherClick(position)

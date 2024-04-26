@@ -54,4 +54,13 @@
         android:hint="Wpisz liczbę godzin"
         android:text="6"/>
 
+    <Button
+        android:id="@+id/refreshWeatherButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="50dp"
+        android:layout_gravity="center_horizontal"
+        android:text="Odśwież pogodę"
+        android:textSize="18sp"/>
+
 </LinearLayout>
