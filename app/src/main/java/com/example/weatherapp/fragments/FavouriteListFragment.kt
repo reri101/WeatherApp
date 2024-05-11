@@ -10,13 +10,16 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
 import android.widget.Button
+import android.widget.ImageButton
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.weatherapp.R
 import android.widget.SearchView
 import android.widget.Toast
 import androidx.core.content.ContentProviderCompat
+import com.example.weatherapp.MainActivity
 import com.example.weatherapp.adapter.CityAdapter
 import com.example.weatherapp.data.ApiInterface
 import com.example.weatherapp.data.WeatherApp
@@ -39,7 +42,9 @@ class FavouriteListFragment : Fragment(), CityAdapter.OnDeleteClickListener, Cit
     private lateinit var adapter: CityAdapter
     private lateinit var recyclerView: RecyclerView
     private lateinit var searchView: SearchView
+    private lateinit var addToFavButton: ImageButton
     private lateinit var sharedPreferences: SharedPreferences
+    private lateinit var sharedPreferences2: SharedPreferences
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -47,50 +52,85 @@ class FavouriteListFragment : Fragment(), CityAdapter.OnDeleteClickListener, Cit
     ): View? {
         val view = inflater.inflate(R.layout.fragment_favourite_list, container, false)
 
-        // Inicjalizacja SharedPreferences
         sharedPreferences = requireContext().getSharedPreferences("FavCities4", Context.MODE_PRIVATE)
+        sharedPreferences2 = requireContext().getSharedPreferences("WeatherAppPrefs", Context.MODE_PRIVATE)
 
-        // Inicjalizacja RecyclerView
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
         adapter = CityAdapter(this)
         adapter.setOnWeatherClickListener(this)
 
-
-        // Inicjalizacja SearchView
         searchView = view.findViewById(R.id.searchView)
+        addToFavButton = view.findViewById(R.id.addToFavBtn)
 
-        // Inicjalizacja adaptera i przypisanie do RecyclerView
         setupRecyclerView()
 
-        // Wczytaj listę ulubionych miast z SharedPreferences
         val favouriteCitiesSet = sharedPreferences.getStringSet("favoriteCities", emptySet()) ?: emptySet()
         if (favouriteCitiesSet != null) {
             for (city in favouriteCitiesSet) {
-                Log.d("cities", "$city")
+                //Log.d("cities", "$city")
                 adapter.addCity(city)
             }
         }
 
-        // Obsługa zdarzeń dla SearchView
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 // Sprawdź, czy zdarzenie jest wywoływane po naciśnięciu Enter
-                Log.d("AddCity", "XXX")
-                if (!query.isNullOrEmpty()) {
-                    checkCityAvailabilityAndAddToList(query)
-                    searchView.setQuery("", false)
+                //Log.d("AddCity", "XXX")
+                if (!query.isNullOrEmpty() && isAdded) {
+                    val query = searchView.query.toString()
+                    if (!query.isNullOrEmpty()) {
+                        checkCityAvailabilityAndAddToList(query)
+                        searchView.setQuery("", false)
+                    }
                 }
                 return true
             }
 
+
             override fun onQueryTextChange(newText: String?): Boolean {
-                Log.d("AddCity", "X")
-                // Tutaj możesz reagować na zmiany tekstu w SearchView, jeśli to potrzebne
+                //Log.d("AddCity", "X")
                 return false
             }
         })
+
+        addToFavButton.setOnClickListener {
+
+
+            val query = searchView.query.toString()
+            if (!query.isNullOrEmpty()) {
+                val cityName = query
+
+                testFetchWeatherData(cityName, "metric") { isAvailable ->
+                    if (isAvailable && isAdded) {
+
+                        val imm =
+                            requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                        imm.hideSoftInputFromWindow(searchView.windowToken, 0)
+
+                        val editor = sharedPreferences2?.edit()
+                        editor?.putString("city_setted", cityName)
+                        editor?.apply()
+
+                        (activity as MainActivity).selectTabInTabLayout()
+
+                    } else {
+                        Toast.makeText(
+                            requireContext(),
+                            "Nie można odczytać danych o pogodzie dla $cityName",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            }else{
+                Toast.makeText(
+                    requireContext(),
+                    "Nie podales nazwy miasta",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
 
         return view
 
@@ -102,14 +142,11 @@ class FavouriteListFragment : Fragment(), CityAdapter.OnDeleteClickListener, Cit
         return when {
             activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
             activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> true
-            // Możesz dodać inne typy transportu, jeśli są potrzebne
             else -> false
         }
     }
-    // Metoda obsługująca kliknięcie przycisku "Pogoda"
     override fun onWeatherClick(position: Int) {
-        sharedPreferences = requireContext().getSharedPreferences("WeatherAppPrefs", Context.MODE_PRIVATE)
-        val editor = sharedPreferences?.edit()
+        val editor = sharedPreferences2?.edit()
 
         editor?.putString("city_setted", adapter.getCity(position))
         editor?.apply()
@@ -119,17 +156,13 @@ class FavouriteListFragment : Fragment(), CityAdapter.OnDeleteClickListener, Cit
         pogodaTab?.select()
 
 
-        // Pobierz nazwę miasta z adaptera na podstawie pozycji
-        val cityName = adapter.getCity(position)
-        // Przejdź do fragmentu z informacjami o pogodzie, przekazując nazwę miasta
-        val weatherFragment = WeatherFragment.newInstance(cityName)
-        Log.d("citynamee", "cn1 $cityName")
-        val transaction = requireActivity().supportFragmentManager.beginTransaction()
-        transaction.replace(R.id.constLayout, weatherFragment)
-        transaction.addToBackStack(null)
-        transaction.commit()
-
-
+//        val cityName = adapter.getCity(position)
+//        val weatherFragment = WeatherFragment.newInstance(cityName)
+//        Log.d("citynamee", "cn1 $cityName")
+//        val transaction = requireActivity().supportFragmentManager.beginTransaction()
+//        transaction.replace(R.id.constLayout, weatherFragment)
+//        transaction.addToBackStack(null)
+//        transaction.commit()
     }
 
     override fun onDeleteClick(position: Int) {
@@ -138,17 +171,13 @@ class FavouriteListFragment : Fragment(), CityAdapter.OnDeleteClickListener, Cit
 
     private fun setupRecyclerView() {
 
-        // Ustaw adapter dla RecyclerView
         recyclerView.adapter = adapter
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
     }
 
     private fun addCityToList(cityName: String) {
-        // Sprawdź, czy miasto nie istnieje już na liście
         if (!adapter.containsCity(cityName)) {
-            // Dodaj nowe miasto do listy miast w adapterze
             adapter.addCity(cityName)
-            // Zapisz listę ulubionych miast do SharedPreferences
             val favouriteCitiesSet = sharedPreferences.getStringSet("favoriteCities", emptySet())?.toMutableSet() ?: mutableSetOf()
             favouriteCitiesSet.add(cityName)
             val editor = sharedPreferences.edit()

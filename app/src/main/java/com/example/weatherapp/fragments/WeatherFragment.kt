@@ -1,6 +1,7 @@
 package com.example.weatherapp.fragments
 
 import android.content.Context
+import android.content.res.Configuration
 import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.Fragment
@@ -8,10 +9,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.viewpager2.widget.ViewPager2
+import com.example.weatherapp.R
 import com.example.weatherapp.adapter.FragmentPagedAdapter
 import com.example.weatherapp.databinding.FragmentWeatherBinding
 import com.google.android.material.tabs.TabLayout
-
 
 
 /**
@@ -32,7 +33,7 @@ class WeatherFragment : Fragment() {
             val args = Bundle()
             args.putString("cityName", cityName)
             fragment.arguments = args
-            Log.d("citynamee", "cn2 $cityName")
+//            Log.d("citynamee", "cn2 $cityName")
             return fragment
         }
     }
@@ -43,11 +44,35 @@ class WeatherFragment : Fragment() {
 
         binding = FragmentWeatherBinding.inflate(inflater, container, false)
 
-        tabLayout = binding.tabLayout2
-        viewPager2 = binding.viewPager
+        val isTablet = resources.configuration.screenLayout and Configuration.SCREENLAYOUT_SIZE_MASK >= Configuration.SCREENLAYOUT_SIZE_LARGE
+
+        if (isTablet) {
+            setupTabletLayout()
+        } else {
+            setupPhoneLayout()
+        }
+
+
+
+        return binding.root
+    }
+
+    fun setupTabletLayout(){
+        val basicWeatherFragment = BasicWeatherFragment()
+        val advanceWeatherFragment = AdvanceWeatherFragment()
+        val nextDaysWeatherFragmentFragment = NextDaysWeatherFragment()
+
+        replaceFrame(basicWeatherFragment, R.id.standardFrame)
+        replaceFrame(advanceWeatherFragment, R.id.advanceFrame)
+        replaceFrame(nextDaysWeatherFragmentFragment, R.id.nextDFrame)
+
+    }
+    fun setupPhoneLayout(){
+        tabLayout = binding.tabLayout2!!
+        viewPager2 = binding.viewPager!!
         val sharedPreferences = requireContext().getSharedPreferences("WeatherAppPrefs", Context.MODE_PRIVATE)
         val cityName = sharedPreferences.getString("city_setted", "Warsaw") ?: "Warsaw"
-        Log.d("citynamee", "cn3 $cityName")
+//        Log.d("citynamee", "cn3 $cityName")
         adapter = FragmentPagedAdapter(requireActivity(), cityName)
         viewPager2.adapter = adapter
 
@@ -74,8 +99,12 @@ class WeatherFragment : Fragment() {
                 tabLayout.selectTab(tabLayout.getTabAt(position))
             }
         })
-
-        return binding.root
+    }
+    private fun replaceFrame(fragment: Fragment, r: Int) {
+        val fragmentManager = requireActivity().supportFragmentManager
+        val fragmentTransaction = fragmentManager.beginTransaction()
+        fragmentTransaction.replace(r, fragment)
+        fragmentTransaction.commit()
     }
 
 }

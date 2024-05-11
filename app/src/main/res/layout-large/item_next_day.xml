@@ -4,9 +4,9 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="20dp"
-    android:backgroundTint="#90A9A9A9"
     app:cardCornerRadius="20dp"
-    app:cardElevation="10dp">
+    app:cardElevation="10dp"
+    app:cardBackgroundColor="@color/blue">
 
     <RelativeLayout
         android:layout_width="match_parent"

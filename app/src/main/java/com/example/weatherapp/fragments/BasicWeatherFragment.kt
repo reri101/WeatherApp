@@ -31,6 +31,13 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
+
+// dodanie watkow aby odswierzac informacje pogoodwe i widok gdy minie okreslony czas zamiast gdy ponownie wejdziemy
+// co 2 min odswierzanie
+// po wyszukaniu miasta w ulubione powinno zamieniac widok ale nie dodawac do ulubionych
+// dodawanie do ulubionych powinno byc dodatkowe np w wyszukiwaniu w prawym rogu byl by guzik dodac do ulubionych
+// naprawic widok po zmianie na farenheita
+
 class BasicWeatherFragment : Fragment() {
 
     private lateinit var sharedPreferences: SharedPreferences
@@ -38,6 +45,8 @@ class BasicWeatherFragment : Fragment() {
     private lateinit var bindingMain: ActivityMainBinding
     private lateinit var cityName: String
     private val handler = Handler(Looper.getMainLooper())
+    private var isWeatherUpdateThreadRunning = false
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -47,39 +56,61 @@ class BasicWeatherFragment : Fragment() {
         binding = FragmentBasicWeatherBinding.inflate(inflater, container, false)
         sharedPreferences = requireContext().getSharedPreferences("WeatherAppPrefs", Context.MODE_PRIVATE)
         cityName = sharedPreferences.getString("city_setted", "Warsaw") ?: "Warsaw"
-        Log.d("citynamee", "cnn $cityName")
-        setUpWeatherInfo()
+        //Log.d("citynamee", "cnn $cityName")
+
+        //startWeatherUpdateThread()
         return binding.root
     }
 
+    //ondestrv
+
+
+
+
     override fun onResume() {
         super.onResume()
-        val units = sharedPreferences.getString("temperatureUnit", "metric") ?: "metric"
-        cityName = sharedPreferences.getString("city_setted", "Warsaw") ?: "Warsaw"
-        Log.d("citynamee", "cn $cityName")
-        fetachWeatherData(cityName, units)
+        if (!isWeatherUpdateThreadRunning) {
+            startWeatherUpdateThread()
+            isWeatherUpdateThreadRunning = true
+        }
     }
+
+    override fun onPause() {
+        super.onPause()
+        handler.removeCallbacksAndMessages(null)
+        isWeatherUpdateThreadRunning = false
+    }
+
+    private fun startWeatherUpdateThread() {
+        val runnable = object : Runnable {
+            override fun run() {
+                //Log.d("watek", ":--- $cityName")
+                setUpWeatherInfo()
+                handler.postDelayed(this, 10000)
+            }
+        }
+        handler.post(runnable)
+    }
+
+    // onpause
 
     private fun setUpWeatherInfo() {
         val units = sharedPreferences.getString("temperatureUnit", "metric") ?: "metric"
         cityName = sharedPreferences.getString("city_setted", "Warsaw") ?: "Warsaw"
 
         val shouldFetchFromNetwork = shouldFetchWeatherFromNetwork()
-        Log.d("citynamee", ":x $cityName")
-        Log.d("shouldFetchFromNetwork", ": $shouldFetchFromNetwork")
+        //Log.d("shouldFetchFromNetwork", ": $shouldFetchFromNetwork")
+        //Log.d("watek", ":xxx $cityName")
         if (shouldFetchFromNetwork) {
+            //Log.d("watek", ":x $cityName")
             fetachWeatherData(cityName, units)
         }else{
             loadWeatherDataFromFile(cityName,units)
         }
 
-        val runnableCode = object : Runnable {
-            override fun run() {
-                updateCurrentTime()
-                handler.postDelayed(this, 60000)
-            }
-        }
-        handler.post(runnableCode)
+// nowy watek
+
+        updateCurrentTime()
     }
 
     private fun updateCurrentTime() {
@@ -90,24 +121,38 @@ class BasicWeatherFragment : Fragment() {
     }
 
     private fun fetachWeatherData(cityName: String, units: String) {
-        Log.d("citynamee", ": $cityName")
+        //Log.d("citynamee", ": $cityName")
         val retrofit = Retrofit.Builder()
             .addConverterFactory(GsonConverterFactory.create())
             .baseUrl("https://api.openweathermap.org/data/2.5/")
             .build()
             .create(ApiInterface::class.java)
-        val response = retrofit.getWeatherData(cityName, "pl", "bd04d1ce49301ed0175976c62138cd19", units)
+        val response = retrofit.getWeatherData(cityName, "en", "bd04d1ce49301ed0175976c62138cd19", units)
         response.enqueue(object : Callback<WeatherApp> {
             override fun onResponse(call: Call<WeatherApp>, response: Response<WeatherApp>) {
-                val responseBody = response.body()
+                var responseBody = response.body()
 
                 if (response.isSuccessful && responseBody != null) {
                     var temperatureC = responseBody.main.temp
                     var temperatureF = (temperatureC * 9 / 5 + 32)
+                    var minTempC = responseBody.main.temp_min
+                    var maxTempC = responseBody.main.temp_max
+                    var minTempF = (minTempC * 9 / 5 + 32)
+                    var maxTempF = (maxTempC * 9 / 5 + 32)
                     if(units == "imperial"){
                         temperatureF = responseBody.main.temp
                         temperatureC = (temperatureF - 32) * 5 / 9
+                        minTempF = minTempC
+                        maxTempF = maxTempC
+                        minTempC = (minTempF - 32) * 5 / 9
+                        maxTempC = (maxTempF - 32) * 5 / 9
                     }
+                    temperatureC = String.format(Locale.getDefault(), "%.2f", temperatureC).toDouble()
+                    temperatureF = String.format(Locale.getDefault(), "%.2f", temperatureF).toDouble()
+                    minTempC = String.format(Locale.getDefault(), "%.2f", minTempC).toDouble()
+                    maxTempC = String.format(Locale.getDefault(), "%.2f", maxTempC).toDouble()
+                    minTempF = String.format(Locale.getDefault(), "%.2f", minTempF).toDouble()
+                    maxTempF = String.format(Locale.getDefault(), "%.2f", maxTempF).toDouble()
 
                     val weatherData = WeatherData(
                         cityName = cityName,
@@ -120,8 +165,10 @@ class BasicWeatherFragment : Fragment() {
                         sunSet = responseBody.sys.sunset.toLong(),
                         pressure = responseBody.main.pressure.toString(),
                         condition = responseBody.weather.firstOrNull()?.main ?: "unknown",
-                        maxTemp = responseBody.main.temp_max.toString(),
-                        minTemp = responseBody.main.temp_min.toString(),
+                        maxTempC = maxTempC.toString(),
+                        minTempC = minTempC.toString(),
+                        maxTempF = maxTempF.toString(),
+                        minTempF = minTempF.toString(),
                         desc = responseBody.weather.first().description,
                         coordinates1 = String.format(Locale.getDefault(), "%.2f", responseBody.coord.lat.toString().toDouble()),
                         coordinates2 = String.format(Locale.getDefault(), "%.2f", responseBody.coord.lon.toString().toDouble())
@@ -131,7 +178,7 @@ class BasicWeatherFragment : Fragment() {
 
                     val editor = sharedPreferences.edit()
                     editor.putLong("lastRefreshTime_x"+cityName, System.currentTimeMillis())
-                    Log.d("shouldFetchFromNetwork", ":1 lastRefreshTime_x"+cityName)
+                    //Log.d("shouldFetchFromNetwork", ":1 lastRefreshTime_x"+cityName)
                     editor.apply()
 
                     updateUI(weatherData,units)
@@ -155,10 +202,8 @@ class BasicWeatherFragment : Fragment() {
             }
             fis.close()
             isr.close()
-            // Konwertuj dane JSON na obiekt WeatherData
             val gson = Gson()
             val weatherData = gson.fromJson(sb.toString(), WeatherData::class.java)
-            // Aktualizuj interfejs użytkownika z danymi z pliku JSON
             updateUI(weatherData, units)
         } catch (e: IOException) {
             e.printStackTrace()
@@ -179,25 +224,24 @@ class BasicWeatherFragment : Fragment() {
 
     private fun updateUI(weatherData: WeatherData,units: String) {
         binding.temperatureB.text = binding.temperatureB.text.toString().replace("00:00", weatherData.temperatureC)
-        binding.weatherTypeB.text = binding.weatherTypeB.text.toString().replace("Sunny", weatherData.condition)
-        binding.maxMinTempB.text = binding.maxMinTempB.text.toString().replace("Max", weatherData.maxTemp)
-        binding.maxMinTempB.text = binding.maxMinTempB.text.toString().replace("Min", weatherData.minTemp)
+        binding.weatherTypeB?.text = binding.weatherTypeB?.text.toString().replace("Sunny", weatherData.condition)
         binding.dayOfDateB.text = dayName(System.currentTimeMillis())
         binding.dateB.text = date(System.currentTimeMillis())
         binding.descriptionB.text = weatherData.desc
         binding.cityNameB.text = " $cityName"
-        binding.coordinatorB.text = binding.coordinatorB.text.toString().replace("00", weatherData.coordinates1)
+        val coordiantes1 = weatherData.coordinates1
+        val coordiantes2 = weatherData.coordinates2
+        binding.coordinatorB.text = "N $coordiantes1°, $coordiantes2°"
         binding.coordinatorB.text = binding.coordinatorB.text.toString().replace("11", weatherData.coordinates2)
 
         val fahrenheit = getString(R.string.fahrenheitDegree)
         val celsjusz = getString(R.string.celsjuszDegree)
         if (units == "imperial") {
-            binding.temperatureB.text = binding.temperatureB.text.toString().replace("00:00", weatherData.temperatureF)
-            binding.temperatureB.text = binding.temperatureB.text.toString().replace(celsjusz, fahrenheit)
-            binding.maxMinTempB.text = binding.maxMinTempB.text.toString().replace(celsjusz, fahrenheit)
+            binding.temperatureB.text = weatherData.temperatureF + " $fahrenheit"
+            binding.maxMinTempB.text = weatherData.minTempF +" $fahrenheit - " + weatherData.maxTempF + " $fahrenheit"
         } else {
-            binding.temperatureB.text = binding.temperatureB.text.toString().replace(fahrenheit, celsjusz)
-            binding.maxMinTempB.text = binding.maxMinTempB.text.toString().replace(fahrenheit, celsjusz)
+            binding.temperatureB.text = weatherData.temperatureC + " $celsjusz"
+            binding.maxMinTempB.text = weatherData.minTempC +" $celsjusz - " + weatherData.maxTempC + " $celsjusz"
         }
 
         (activity as? WeatherConditionListener)?.onWeatherConditionChanged(weatherData.condition)
@@ -230,11 +274,11 @@ class BasicWeatherFragment : Fragment() {
 
     private fun shouldFetchWeatherFromNetwork(): Boolean {
         val lastRefreshTime = sharedPreferences.getLong("lastRefreshTime_x"+cityName, 0L)
-        Log.d("shouldFetchFromNetwork", ": lastRefreshTime_x"+cityName)
+        //Log.d("shouldFetchFromNetwork", ": lastRefreshTime_x"+cityName)
         val refreshFrequency = sharedPreferences.getInt("refreshFrequency", 6)
         val currentTime = System.currentTimeMillis()
         val elapsedTimeSinceLastRefresh = currentTime - lastRefreshTime
-        val elapsedTimeInHours = elapsedTimeSinceLastRefresh / (1000 * 60 * 60)
+        val elapsedTimeInHours = elapsedTimeSinceLastRefresh / (1000 * 60)
         return elapsedTimeInHours >= refreshFrequency
     }
 

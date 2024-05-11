@@ -21,7 +21,6 @@ class CityAdapter(private val listener: OnDeleteClickListener, private val citie
     fun setOnWeatherClickListener(listener: OnWeatherClickListener) {
         this.weatherClickListener = listener
     }
-    // Definicja interfejsu dla kliknięcia przycisku "Usuń"
     interface OnDeleteClickListener {
         fun onDeleteClick(position: Int)
     }
@@ -31,30 +30,26 @@ class CityAdapter(private val listener: OnDeleteClickListener, private val citie
         fun onWeatherClick(position: Int)
     }
 
-    // Tworzy nowe widoki (wywoływane przez layout manager)
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_city, parent, false)
         return ViewHolder(view)
     }
 
-    // Zastępuje zawartość widoku (wywoływane przez layout manager)
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val city = cities[position]
         holder.bind(city)
         holder.deleteButton.setOnClickListener {
-            listener.onDeleteClick(position) // Wywołanie metody onDeleteClick interfejsu
+            listener.onDeleteClick(position)
         }
     }
 
-    // Zwraca rozmiar danych (wywoływane przez layout manager)
     override fun getItemCount(): Int {
         return cities.size
     }
 
-    // Metoda do dodawania miasta do listy
     fun addCity(city: String) {
         val s = cities.size
-        Log.d("citiesCounter", "$s")
+//        Log.d("citiesCounter", "$s")
         cities.add(city)
         notifyItemInserted(cities.size - 1)
     }
@@ -67,17 +62,14 @@ class CityAdapter(private val listener: OnDeleteClickListener, private val citie
         }
     }
 
-    // Metoda do sprawdzania, czy miasto już istnieje na liście
     fun containsCity(city: String): Boolean {
         return cities.contains(city)
     }
 
-    // Metoda zwracająca nazwę miasta na podstawie pozycji
     fun getCity(position: Int): String {
         return cities[position]
     }
 
-    // Klasa ViewHolder, która przechowuje widok każdego elementu listy
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val cityTextView: TextView = itemView.findViewById(R.id.cityTextView)
         val deleteButton: Button = itemView.findViewById(R.id.deleteButton)
@@ -87,7 +79,6 @@ class CityAdapter(private val listener: OnDeleteClickListener, private val citie
         }
 
         init {
-            // Inicjalizacja przycisku "Pogoda" i dodanie obsługi kliknięcia
             itemView.findViewById<Button>(R.id.weatherButton).setOnClickListener {
 
                 val position = adapterPosition

@@ -4,12 +4,16 @@ package com.example.weatherapp.fragments
 import android.content.Context
 import android.content.SharedPreferences
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.weatherapp.R
 import com.example.weatherapp.dataND.NextDayWeatherItem
 import com.example.weatherapp.adapter.NextDaysWeatherAdapter
 import com.example.weatherapp.dataND.NextDayWeatherList
@@ -29,6 +33,9 @@ class NextDaysWeatherFragment : Fragment() {
     private lateinit var sharedPreferences: SharedPreferences
     private lateinit var binding: FragmentNextDaysWeatherBinding
     private lateinit var cityName: String
+    private val handler = Handler(Looper.getMainLooper())
+    private var isWeatherUpdateThreadRunning = false
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -36,34 +43,49 @@ class NextDaysWeatherFragment : Fragment() {
     ): View? {
         binding = FragmentNextDaysWeatherBinding.inflate(inflater, container, false)
         sharedPreferences = requireContext().getSharedPreferences("WeatherAppPrefs", Context.MODE_PRIVATE)
-        cityName = sharedPreferences.getString("city_setted", "Warsaw") ?: "Warsaw"
-        val units = sharedPreferences.getString("temperatureUnit", "metric") ?: "metric"
 
-        setupRecyclerView(cityName,units)
         return binding.root
     }
 
     override fun onResume() {
         super.onResume()
-        val units = sharedPreferences.getString("temperatureUnit", "metric") ?: "metric"
-        cityName = sharedPreferences.getString("city_setted", "Warsaw") ?: "Warsaw"
-        Log.d("citynamee", "cn $cityName")
-        val apiRequestUrl = generateWeatherApiRequestUrl(cityName, units)
-        fetchWeatherData(apiRequestUrl)
+        if (!isWeatherUpdateThreadRunning) {
+            startWeatherUpdateThread()
+            isWeatherUpdateThreadRunning = true
+        }
+    }
+    override fun onPause() {
+        super.onPause()
+        handler.removeCallbacksAndMessages(null)
+        isWeatherUpdateThreadRunning = false
+    }
+    private fun startWeatherUpdateThread() {
+        val runnable = object : Runnable {
+            override fun run() {
+                val units = sharedPreferences.getString("temperatureUnit", "metric") ?: "metric"
+                cityName = sharedPreferences.getString("city_setted", "Warsaw") ?: "Warsaw"
+//                Log.d("watek", ":--- $cityName")
+                setupRecyclerView(cityName,units)
+                handler.postDelayed(this, 10000)
+            }
+        }
+        handler.post(runnable)
     }
 
     private fun setupRecyclerView(cityName: String, units: String) {
 
         val shouldFetchFromNetwork = shouldFetchWeatherFromNetwork()
-        Log.d("citynamee", ":x $cityName")
-        Log.d("shouldFetchFromNetworkND", ": $shouldFetchFromNetwork")
+//        Log.d("citynamee", ":x $cityName")
+//        Log.d("shouldFetchFromNetworkND", ": $shouldFetchFromNetwork")
         if (shouldFetchFromNetwork) {
+//            Log.d("watek", ":.. $cityName")
             val apiRequestUrl = generateWeatherApiRequestUrl(cityName, units)
             fetchWeatherData(apiRequestUrl)
         }else{
+//            Log.d("watek", ":.c. $cityName")
             val nextDayWeatherList = loadWeatherDataFromFile(cityName)
             activity?.runOnUiThread {
-                val adapter = NextDaysWeatherAdapter(nextDayWeatherList.weatherList)
+                val adapter = NextDaysWeatherAdapter(requireContext(),nextDayWeatherList.weatherList)
                 binding.recyclerView.adapter = adapter
                 binding.recyclerView.layoutManager = LinearLayoutManager(requireContext())
             }
@@ -96,7 +118,7 @@ class NextDaysWeatherFragment : Fragment() {
                     val nextDayWeatherList = generateNextDayWeatherList(apiResponse)
                     saveWeatherDataToFile(cityName,nextDayWeatherList)
                     activity?.runOnUiThread {
-                        val adapter = NextDaysWeatherAdapter(nextDayWeatherList.weatherList)
+                        val adapter = NextDaysWeatherAdapter(requireContext(),nextDayWeatherList.weatherList)
                         binding.recyclerView.adapter = adapter
                         binding.recyclerView.layoutManager = LinearLayoutManager(requireContext())
                     }
@@ -117,7 +139,7 @@ class NextDaysWeatherFragment : Fragment() {
         val refreshFrequency = sharedPreferences.getInt("refreshFrequency", 6)
         val currentTime = System.currentTimeMillis()
         val elapsedTimeSinceLastRefresh = currentTime - lastRefreshTime
-        val elapsedTimeInHours = elapsedTimeSinceLastRefresh / (1000 * 60 * 60)
+        val elapsedTimeInHours = elapsedTimeSinceLastRefresh / (1000 * 60)
         return elapsedTimeInHours >= refreshFrequency
     }
 
@@ -132,13 +154,11 @@ class NextDaysWeatherFragment : Fragment() {
                 val weatherObj = jsonArray.getJSONObject(i)
                 val dtTxt = weatherObj.getString("dt_txt")
 
-                // Konwersja daty
                 val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
                 val date = sdf.parse(dtTxt)
                 val calendar = Calendar.getInstance()
                 calendar.time = date
 
-                // Sprawdź czy godzina w dacie jest równa 15:00
                 val hour = calendar.get(Calendar.HOUR_OF_DAY)
                 if (hour == 15) {
                     val mainObj = weatherObj.getJSONObject("main")
@@ -146,19 +166,30 @@ class NextDaysWeatherFragment : Fragment() {
                     val weather = weatherArray.getJSONObject(0)
                     val windObj = weatherObj.getJSONObject("wind")
 
-                    val temperature = mainObj.getDouble("temp")
+                    var temperatureC = mainObj.getDouble("temp")
+                    var temperatureF = (temperatureC * 9 / 5 + 32)
+                    val units = sharedPreferences.getString("temperatureUnit", "metric") ?: "metric"
+                    if(units == "imperial"){
+                        temperatureF = mainObj.getDouble("temp")
+                        temperatureC = (temperatureF - 32) * 5 / 9
+                    }
                     val weatherDescription = weather.getString("description")
                     val weatherCondition = weather.getString("main")
                     val windSpeed = windObj.getDouble("speed")
                     val humidity = mainObj.getDouble("humidity")
 
-                    // Konwersja daty
                     val dayDate = SimpleDateFormat("EEEE, dd MMMM", Locale.getDefault()).format(date)
+
+                    val fahrenheit = getString(R.string.fahrenheitDegree)
+                    val celsjusz = getString(R.string.celsjuszDegree)
+                    temperatureC = String.format("%.2f", temperatureC).toDouble()
+                    temperatureF = String.format("%.2f", temperatureF).toDouble()
 
                     val nextDayWeatherItem = NextDayWeatherItem(
                         dayDate = dayDate,
                         condition = weatherCondition,
-                        temperature = "$temperature ℃",
+                        temperatureC = "$temperatureC $celsjusz",
+                        temperatureF = "$temperatureF $fahrenheit",
                         weatherDescription = weatherDescription,
                         windSpeed = "$windSpeed m/s",
                         humidity = "$humidity %"
@@ -200,7 +231,6 @@ class NextDaysWeatherFragment : Fragment() {
             }
             fis.close()
             isr.close()
-            // Konwertuj dane JSON na listę obiektów NextDayWeatherItem
             val gson = Gson()
             val weatherDataList = gson.fromJson(sb.toString(), NextDayWeatherList::class.java)
             return weatherDataList

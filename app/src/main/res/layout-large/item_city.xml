@@ -10,7 +10,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:textSize="18sp"
+        android:textSize="25sp"
         android:textColor="@android:color/black" />
 
     <Button
@@ -18,11 +18,13 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="10dp"
-        android:text="Pogoda" />
+        android:text="Pogoda"
+        android:textSize="25sp"/>
     <Button
         android:id="@+id/deleteButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Usuń" />
+        android:text="Usuń"
+        android:textSize="25sp" />
 
 </LinearLayout>

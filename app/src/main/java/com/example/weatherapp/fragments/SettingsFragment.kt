@@ -52,11 +52,9 @@ class SettingsFragment : Fragment() {
 
         sharedPreferences = requireActivity().getSharedPreferences("WeatherAppPrefs", Context.MODE_PRIVATE)
 
-        // Inicjalizacja widoków
         val temperatureUnitRadioGroup: RadioGroup = view.findViewById(R.id.temperatureUnitRadioGroup)
         val refreshFrequencyEditText: EditText = view.findViewById(R.id.refreshFrequencyEditText)
 
-        // Ustaw obecne wartości
         val currentTemperatureUnit = sharedPreferences.getString("temperatureUnit", "metric")
         when (currentTemperatureUnit) {
             "metric" -> temperatureUnitRadioGroup.check(R.id.celsiusRadioButton)
@@ -66,20 +64,18 @@ class SettingsFragment : Fragment() {
         val currentRefreshFrequency = sharedPreferences.getInt("refreshFrequency", 6)
         refreshFrequencyEditText.setText(currentRefreshFrequency.toString())
 
-        // Obsługa zmiany jednostki temperatury
         temperatureUnitRadioGroup.setOnCheckedChangeListener { _, checkedId ->
             val selectedUnit = if (checkedId == R.id.celsiusRadioButton) "metric" else "imperial"
             sharedPreferences.edit().putString("temperatureUnit", selectedUnit).apply()
         }
 
-        // Obsługa zmiany częstotliwości odświeżania
         refreshFrequencyEditText.addTextChangedListener {
             val frequencyText = it.toString()
             val frequency = frequencyText.toIntOrNull()
             if (frequency != null && frequency >= 0) {
                 sharedPreferences.edit().putInt("refreshFrequency", frequency).apply()
             } else {
-                Toast.makeText(requireContext(), "Podaj poprawną liczbę godzin", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Podaj poprawną liczbę minut", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -118,7 +114,6 @@ class SettingsFragment : Fragment() {
         return when {
             activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
             activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> true
-            // Możesz dodać inne typy transportu, jeśli są potrzebne
             else -> false
         }
     }
@@ -179,19 +174,29 @@ class SettingsFragment : Fragment() {
                     val weather = weatherArray.getJSONObject(0)
                     val windObj = weatherObj.getJSONObject("wind")
 
-                    val temperature = mainObj.getDouble("temp")
+                    var temperatureC = mainObj.getDouble("temp")
+                    var temperatureF = (temperatureC * 9 / 5 + 32)
+                    val units = sharedPreferences.getString("temperatureUnit", "metric") ?: "metric"
+                    if(units == "imperial"){
+                        temperatureF = mainObj.getDouble("temp")
+                        temperatureC = (temperatureF - 32) * 5 / 9
+                    }
                     val weatherDescription = weather.getString("description")
                     val weatherCondition = weather.getString("main")
                     val windSpeed = windObj.getDouble("speed")
                     val humidity = mainObj.getDouble("humidity")
 
-                    // Konwersja daty
                     val dayDate = SimpleDateFormat("EEEE, dd MMMM", Locale.getDefault()).format(date)
 
+                    val fahrenheit = getString(R.string.fahrenheitDegree)
+                    val celsjusz = getString(R.string.celsjuszDegree)
+                    temperatureC = String.format("%.2f", temperatureC).toDouble()
+                    temperatureF = String.format("%.2f", temperatureF).toDouble()
                     val nextDayWeatherItem = NextDayWeatherItem(
                         dayDate = dayDate,
                         condition = weatherCondition,
-                        temperature = "$temperature ℃",
+                        temperatureC = "$temperatureC $celsjusz",
+                        temperatureF = "$temperatureF $fahrenheit",
                         weatherDescription = weatherDescription,
                         windSpeed = "$windSpeed m/s",
                         humidity = "$humidity %"
@@ -234,10 +239,24 @@ class SettingsFragment : Fragment() {
                 if (response.isSuccessful && responseBody != null) {
                     var temperatureC = responseBody.main.temp
                     var temperatureF = (temperatureC * 9 / 5 + 32)
+                    var minTempC = responseBody.main.temp_min
+                    var maxTempC = responseBody.main.temp_max
+                    var minTempF = (minTempC * 9 / 5 + 32)
+                    var maxTempF = (maxTempC * 9 / 5 + 32)
                     if(units == "imperial"){
                         temperatureF = responseBody.main.temp
                         temperatureC = (temperatureF - 32) * 5 / 9
+                        minTempF = minTempC
+                        maxTempF = maxTempC
+                        minTempC = (minTempF - 32) * 5 / 9
+                        maxTempC = (maxTempF - 32) * 5 / 9
                     }
+                    temperatureC = String.format(Locale.getDefault(), "%.2f", temperatureC).toDouble()
+                    temperatureF = String.format(Locale.getDefault(), "%.2f", temperatureF).toDouble()
+                    minTempC = String.format(Locale.getDefault(), "%.2f", minTempC).toDouble()
+                    maxTempC = String.format(Locale.getDefault(), "%.2f", maxTempC).toDouble()
+                    minTempF = String.format(Locale.getDefault(), "%.2f", minTempF).toDouble()
+                    maxTempF = String.format(Locale.getDefault(), "%.2f", maxTempF).toDouble()
 
                     val weatherData = WeatherData(
                         cityName = cityName,
@@ -250,18 +269,21 @@ class SettingsFragment : Fragment() {
                         sunSet = responseBody.sys.sunset.toLong(),
                         pressure = responseBody.main.pressure.toString(),
                         condition = responseBody.weather.firstOrNull()?.main ?: "unknown",
-                        maxTemp = responseBody.main.temp_max.toString(),
-                        minTemp = responseBody.main.temp_min.toString(),
+                        maxTempC = maxTempC.toString(),
+                        minTempC = minTempC.toString(),
+                        maxTempF = maxTempF.toString(),
+                        minTempF = minTempF.toString(),
                         desc = responseBody.weather.first().description,
                         coordinates1 = String.format(Locale.getDefault(), "%.2f", responseBody.coord.lat.toString().toDouble()),
                         coordinates2 = String.format(Locale.getDefault(), "%.2f", responseBody.coord.lon.toString().toDouble())
                     )
 
+
                     saveWeatherDataToFile(cityName, weatherData)
 
                     val editor = sharedPreferences.edit()
                     editor.putLong("lastRefreshTime_x"+cityName, System.currentTimeMillis())
-                    Log.d("shouldFetchFromNetwork", ":1 lastRefreshTime_x"+cityName)
+//                    Log.d("shouldFetchFromNetwork", ":1 lastRefreshTime_x"+cityName)
                     editor.apply()
 
                 }

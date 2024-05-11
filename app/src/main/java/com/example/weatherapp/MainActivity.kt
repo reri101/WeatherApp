@@ -7,37 +7,30 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.View
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
+import com.example.weatherapp.data.ApiInterface
+import com.example.weatherapp.data.WeatherApp
+import com.example.weatherapp.data.WeatherData
 import com.example.weatherapp.databinding.ActivityMainBinding
+import com.example.weatherapp.fragments.BasicWeatherFragment
+import com.example.weatherapp.fragments.FavouriteListFragment
+import com.example.weatherapp.fragments.WeatherFragment
+import com.google.android.material.tabs.TabLayout
+import com.google.gson.Gson
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import java.util.Locale
-import android.widget.Toast
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentManager
-import androidx.fragment.app.FragmentTransaction
-import androidx.viewpager2.widget.ViewPager2
-import com.example.weatherapp.adapter.FragmentPagedAdapter
-import com.example.weatherapp.data.ApiInterface
-import com.example.weatherapp.data.WeatherApp
-import com.example.weatherapp.data.WeatherData
-import com.example.weatherapp.databinding.FragmentBasicWeatherBinding
-import com.example.weatherapp.fragments.AdvanceWeatherFragment
-import com.example.weatherapp.fragments.BasicWeatherFragment
-import com.example.weatherapp.fragments.FavouriteListFragment
-import com.example.weatherapp.fragments.NextDaysWeatherFragment
-import com.example.weatherapp.fragments.WeatherFragment
-import com.google.android.material.tabs.TabLayout
-import com.google.gson.Gson
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
+import java.util.Locale
+
 
 class MainActivity : AppCompatActivity(), BasicWeatherFragment.WeatherConditionListener {
     private lateinit var sharedPreferences: SharedPreferences
@@ -48,6 +41,13 @@ class MainActivity : AppCompatActivity(), BasicWeatherFragment.WeatherConditionL
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(binding.root)
+
+        // Ukryj pasek nawigacyjny
+        // Ukryj pasek nawigacyjny
+        val decorView = window.decorView
+        val uiOptions = (View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
+        decorView.systemUiVisibility = uiOptions
 
         sharedPreferences = getSharedPreferences("WeatherAppPrefs",Context.MODE_PRIVATE)
 
@@ -75,7 +75,6 @@ class MainActivity : AppCompatActivity(), BasicWeatherFragment.WeatherConditionL
                     replaceFragment(favouriteListFragment)
                 }else if(position==1){
                     replaceFragment(weatherFragment)
-                    //weatherFragment.refreshData(cityName)
                 }else if(position==2){
                     replaceFragment(settingsFragment)
                 } else{
@@ -86,6 +85,12 @@ class MainActivity : AppCompatActivity(), BasicWeatherFragment.WeatherConditionL
             override fun onTabReselected(tab: TabLayout.Tab) {}
         })
     }
+    fun selectTabInTabLayout() {
+        val tabLayout = findViewById<TabLayout>(R.id.tabLayout)
+        val pogodaTab = tabLayout.getTabAt(1)
+        pogodaTab?.select()
+    }
+
     private fun isOnline(): Boolean {
         val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -94,7 +99,6 @@ class MainActivity : AppCompatActivity(), BasicWeatherFragment.WeatherConditionL
             return when {
                 activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
                 activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> true
-                // Możesz dodać inne typy transportu, jeśli są potrzebne
                 else -> false
             }
         } else {
@@ -115,7 +119,6 @@ class MainActivity : AppCompatActivity(), BasicWeatherFragment.WeatherConditionL
 
     private fun fetachWeatherData(cityName:String, units:String) {
         if (!shouldRefreshWeather()) {
-            // Nie odświeżaj danych o pogodzie, jeśli ostatnie odświeżenie było wystarczająco niedawno
             return
         }else {
             val retrofit = Retrofit.Builder().addConverterFactory(GsonConverterFactory.create())
@@ -123,7 +126,7 @@ class MainActivity : AppCompatActivity(), BasicWeatherFragment.WeatherConditionL
                 ApiInterface::class.java
             )
             val response =
-                retrofit.getWeatherData(cityName, "pl", "bd04d1ce49301ed0175976c62138cd19", units)
+                retrofit.getWeatherData(cityName, "en", "bd04d1ce49301ed0175976c62138cd19", units)
             response.enqueue(object : Callback<WeatherApp> {
                 override fun onResponse(call: Call<WeatherApp>, response: Response<WeatherApp>) {
                     val responseBody = response.body()
@@ -131,10 +134,24 @@ class MainActivity : AppCompatActivity(), BasicWeatherFragment.WeatherConditionL
                     if (response.isSuccessful && responseBody != null) {
                         var temperatureC = responseBody.main.temp
                         var temperatureF = (temperatureC * 9 / 5 + 32)
+                        var minTempC = responseBody.main.temp_min
+                        var maxTempC = responseBody.main.temp_max
+                        var minTempF = (minTempC * 9 / 5 + 32)
+                        var maxTempF = (maxTempC * 9 / 5 + 32)
                         if(units == "imperial"){
                             temperatureF = responseBody.main.temp
                             temperatureC = (temperatureF - 32) * 5 / 9
+                            minTempF = minTempC
+                            maxTempF = maxTempC
+                            minTempC = (minTempF - 32) * 5 / 9
+                            maxTempC = (maxTempF - 32) * 5 / 9
                         }
+                        temperatureC = String.format(Locale.getDefault(), "%.2f", temperatureC).toDouble()
+                        temperatureF = String.format(Locale.getDefault(), "%.2f", temperatureF).toDouble()
+                        minTempC = String.format(Locale.getDefault(), "%.2f", minTempC).toDouble()
+                        maxTempC = String.format(Locale.getDefault(), "%.2f", maxTempC).toDouble()
+                        minTempF = String.format(Locale.getDefault(), "%.2f", minTempF).toDouble()
+                        maxTempF = String.format(Locale.getDefault(), "%.2f", maxTempF).toDouble()
 
                         val weatherData = WeatherData(
                             cityName = cityName,
@@ -147,12 +164,15 @@ class MainActivity : AppCompatActivity(), BasicWeatherFragment.WeatherConditionL
                             sunSet = responseBody.sys.sunset.toLong(),
                             pressure = responseBody.main.pressure.toString(),
                             condition = responseBody.weather.firstOrNull()?.main ?: "unknown",
-                            maxTemp = responseBody.main.temp_max.toString(),
-                            minTemp = responseBody.main.temp_min.toString(),
+                            maxTempC = maxTempC.toString(),
+                            minTempC = minTempC.toString(),
+                            maxTempF = maxTempF.toString(),
+                            minTempF = minTempF.toString(),
                             desc = responseBody.weather.first().description,
                             coordinates1 = String.format(Locale.getDefault(), "%.2f", responseBody.coord.lat.toString().toDouble()),
                             coordinates2 = String.format(Locale.getDefault(), "%.2f", responseBody.coord.lon.toString().toDouble())
                         )
+
 
                         val gson = Gson()
                         val json = gson.toJson(weatherData)
@@ -162,7 +182,7 @@ class MainActivity : AppCompatActivity(), BasicWeatherFragment.WeatherConditionL
                             val fos = openFileOutput("weather_data_$cityNameLower.json", Context.MODE_PRIVATE)
                             fos.write(json.toByteArray())
                             fos.close()
-                            Log.d("MainActivity", "Data saved to file")
+//                            Log.d("MainActivity", "Data saved to file")
                         } catch (e: IOException) {
                             e.printStackTrace()
                         }
@@ -185,10 +205,10 @@ class MainActivity : AppCompatActivity(), BasicWeatherFragment.WeatherConditionL
     }
     private fun shouldRefreshWeather(): Boolean {
         val lastRefreshTime = sharedPreferences.getLong("lastRefreshTime", 0)
-        val refreshFrequency = sharedPreferences.getInt("refreshFrequency", 6) // Domyślna wartość: 6 godzin
+        val refreshFrequency = sharedPreferences.getInt("refreshFrequency", 6)
         val currentTime = System.currentTimeMillis()
         val elapsedTime = currentTime - lastRefreshTime
-        val elapsedTimeHours = elapsedTime / (1000 * 60 * 60) // Przelicz na godziny
+        val elapsedTimeHours = elapsedTime / (1000 * 60 )
 
         return elapsedTimeHours >= refreshFrequency
     }
@@ -208,11 +228,9 @@ class MainActivity : AppCompatActivity(), BasicWeatherFragment.WeatherConditionL
             val gson = Gson()
             val weatherData = gson.fromJson(json.toString(), WeatherData::class.java)
 
-            // Wyświetl dane o pogodzie z pliku JSON
             //displayWeatherData(weatherData)
         } catch (e: IOException) {
             e.printStackTrace()
-            // Obsługa błędu, jeśli nie można otworzyć pliku JSON
         }
     }
 

@@ -11,4 +11,18 @@
         <item name="android:background">@color/black_overlay</item>
         <item name="android:buttonBarStyle">?android:attr/buttonBarStyle</item>
     </style>
+
+    <style name="MyCustomTabText" parent="TextAppearance.AppCompat.Button">
+        <item name="android:textSize">20sp</item>
+    </style>
+
+    <style name="RoundedCornerImageButton">
+        <item name="shapeAppearanceOverlay">@style/RoundedCorners</item>
+    </style>
+
+    <style name="RoundedCorners">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item> <!-- Możesz dostosować tę wartość według swoich preferencji -->
+    </style>
+
 </resources>

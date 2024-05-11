@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Cień -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/darkBlue"/> <!-- Kolor cienia -->
+            <corners android:radius="4dp"/> <!-- Zadbaj o zaokrąglenie rogów -->
+        </shape>
+    </item>
+    <!-- Ramka -->
+    <item android:bottom="2dp" android:left="2dp" android:right="2dp" android:top="2dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@android:color/transparent"/>
+            <stroke android:width="1dp" android:color="#FFFFFF"/> <!-- Biała ramka -->
+            <corners android:radius="4dp"/> <!-- Zadbaj o zaokrąglenie rogów -->
+        </shape>
+    </item>
+    <!-- Tło przycisku -->
+    <item android:bottom="4dp" android:left="4dp" android:right="4dp" android:top="4dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/red"/> <!-- Kolor tła przycisku -->
+            <corners android:radius="4dp"/> <!-- Zadbaj o zaokrąglenie rogów -->
+        </shape>
+    </item>
+    <!-- Wektor jako tło -->
+    <item>
+        <bitmap android:src="@drawable/add_to_fav_shape" android:gravity="center"/>
+    </item>
+</layer-list>

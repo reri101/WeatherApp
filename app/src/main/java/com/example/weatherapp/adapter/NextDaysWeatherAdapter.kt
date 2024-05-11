@@ -1,15 +1,21 @@
 package com.example.weatherapp.adapter
 
+import android.content.Context
+import android.content.SharedPreferences
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.recyclerview.widget.RecyclerView
 import com.example.weatherapp.R
 import com.example.weatherapp.dataND.NextDayWeatherItem
+import com.example.weatherapp.databinding.FragmentBasicWeatherBinding
+import com.example.weatherapp.databinding.FragmentNextDaysWeatherBinding
 
-class NextDaysWeatherAdapter(private val nextDayWeatherList: List<NextDayWeatherItem>) : RecyclerView.Adapter<NextDaysWeatherAdapter.NextDayWeatherViewHolder>() {
+
+class NextDaysWeatherAdapter(private val context: Context,private val nextDayWeatherList: List<NextDayWeatherItem>) : RecyclerView.Adapter<NextDaysWeatherAdapter.NextDayWeatherViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): NextDayWeatherViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_next_day, parent, false)
@@ -23,10 +29,18 @@ class NextDaysWeatherAdapter(private val nextDayWeatherList: List<NextDayWeather
     override fun getItemCount(): Int = nextDayWeatherList.size
 
     class NextDayWeatherViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private lateinit var sharedPreferences: SharedPreferences
         fun bind(nextDayWeather: NextDayWeatherItem) {
             itemView.apply {
                 itemView.findViewById<TextView>(R.id.dayDateText).text = nextDayWeather.dayDate
-                itemView.findViewById<TextView>(R.id.tempDisplayForeCast).text = nextDayWeather.temperature
+
+                sharedPreferences = context.getSharedPreferences("WeatherAppPrefs", Context.MODE_PRIVATE)
+                val units = sharedPreferences.getString("temperatureUnit", "metric") ?: "metric"
+                if(units == "imperial")
+                    itemView.findViewById<TextView>(R.id.tempDisplayForeCast).text = nextDayWeather.temperatureF
+                else
+                    itemView.findViewById<TextView>(R.id.tempDisplayForeCast).text = nextDayWeather.temperatureC
+
                 itemView.findViewById<TextView>(R.id.weatherDescr).text = nextDayWeather.weatherDescription
                 itemView.findViewById<TextView>(R.id.windSpeed).text = nextDayWeather.windSpeed
                 itemView.findViewById<TextView>(R.id.humidity).text = nextDayWeather.humidity

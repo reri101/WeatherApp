@@ -13,7 +13,7 @@
         <SearchView
             android:id="@+id/searchView"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="90dp"
             android:layout_marginStart="10dp"
             android:layout_marginTop="30dp"
             android:layout_marginEnd="10dp"
@@ -23,12 +23,15 @@
             android:searchIcon="@drawable/search"
             app:layout_constraintEnd_toStartOf="@+id/addToFavBtn"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent" >
+
+        </SearchView>
+
 
         <ImageButton
             android:id="@+id/addToFavBtn"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
+            android:layout_width="90dp"
+            android:layout_height="90dp"
             android:layout_marginEnd="10dp"
             android:layout_weight="1"
             android:background="@drawable/searchbtn"
@@ -37,6 +40,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@+id/searchView"
             app:shapeAppearanceOverlay="@style/RoundedCornerImageButton" />
+
 
 
         <androidx.recyclerview.widget.RecyclerView
@@ -57,7 +61,7 @@
             android:paddingTop="10dp"
             android:paddingBottom="10dp"
             android:text="Ulubione miasta"
-            android:textSize="22dp"
+            android:textSize="35sp"
             android:textAlignment="center"
             android:background="@color/white"
             app:layout_constraintEnd_toEndOf="parent"
