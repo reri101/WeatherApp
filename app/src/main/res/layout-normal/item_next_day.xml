@@ -59,7 +59,6 @@
             android:layout_toEndOf="@id/rel"
             android:orientation="horizontal">
 
-            <!-- Column 1 -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -93,7 +92,6 @@
                 android:layout_margin="4dp"
                 android:background="@android:color/white" />
 
-            <!-- Column 2 -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -134,7 +132,6 @@
                 android:layout_height="match_parent"
                 android:layout_margin="4dp"
                 android:background="@android:color/white" />
-            <!-- Column 3 -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"

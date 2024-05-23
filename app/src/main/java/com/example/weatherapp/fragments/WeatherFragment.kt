@@ -14,12 +14,6 @@ import com.example.weatherapp.adapter.FragmentPagedAdapter
 import com.example.weatherapp.databinding.FragmentWeatherBinding
 import com.google.android.material.tabs.TabLayout
 
-
-/**
- * A simple [Fragment] subclass.
- * Use the [WeatherFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
 class WeatherFragment : Fragment() {
     private lateinit  var binding: FragmentWeatherBinding
     private lateinit var  viewPager2: ViewPager2
@@ -33,7 +27,6 @@ class WeatherFragment : Fragment() {
             val args = Bundle()
             args.putString("cityName", cityName)
             fragment.arguments = args
-//            Log.d("citynamee", "cn2 $cityName")
             return fragment
         }
     }
@@ -52,8 +45,6 @@ class WeatherFragment : Fragment() {
             setupPhoneLayout()
         }
 
-
-
         return binding.root
     }
 
@@ -65,14 +56,12 @@ class WeatherFragment : Fragment() {
         replaceFrame(basicWeatherFragment, R.id.standardFrame)
         replaceFrame(advanceWeatherFragment, R.id.advanceFrame)
         replaceFrame(nextDaysWeatherFragmentFragment, R.id.nextDFrame)
-
     }
     fun setupPhoneLayout(){
         tabLayout = binding.tabLayout2!!
         viewPager2 = binding.viewPager!!
         val sharedPreferences = requireContext().getSharedPreferences("WeatherAppPrefs", Context.MODE_PRIVATE)
         val cityName = sharedPreferences.getString("city_setted", "Warsaw") ?: "Warsaw"
-//        Log.d("citynamee", "cn3 $cityName")
         adapter = FragmentPagedAdapter(requireActivity(), cityName)
         viewPager2.adapter = adapter
 

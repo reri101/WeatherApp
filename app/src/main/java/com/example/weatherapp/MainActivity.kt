@@ -42,8 +42,6 @@ class MainActivity : AppCompatActivity(), BasicWeatherFragment.WeatherConditionL
         enableEdgeToEdge()
         setContentView(binding.root)
 
-        // Ukryj pasek nawigacyjny
-        // Ukryj pasek nawigacyjny
         val decorView = window.decorView
         val uiOptions = (View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                 or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
@@ -182,7 +180,6 @@ class MainActivity : AppCompatActivity(), BasicWeatherFragment.WeatherConditionL
                             val fos = openFileOutput("weather_data_$cityNameLower.json", Context.MODE_PRIVATE)
                             fos.write(json.toByteArray())
                             fos.close()
-//                            Log.d("MainActivity", "Data saved to file")
                         } catch (e: IOException) {
                             e.printStackTrace()
                         }
@@ -211,48 +208,6 @@ class MainActivity : AppCompatActivity(), BasicWeatherFragment.WeatherConditionL
         val elapsedTimeHours = elapsedTime / (1000 * 60 )
 
         return elapsedTimeHours >= refreshFrequency
-    }
-    private fun fetchWeatherDataFromFile() {
-        try {
-            val fis = openFileInput("weather_data.json")
-            val inputStreamReader = InputStreamReader(fis)
-            val bufferedReader = BufferedReader(inputStreamReader)
-            val json = StringBuilder()
-            var line: String? = bufferedReader.readLine()
-            while (line != null) {
-                json.append(line)
-                line = bufferedReader.readLine()
-            }
-            fis.close()
-
-            val gson = Gson()
-            val weatherData = gson.fromJson(json.toString(), WeatherData::class.java)
-
-            //displayWeatherData(weatherData)
-        } catch (e: IOException) {
-            e.printStackTrace()
-        }
-    }
-
-    private fun fetchNextDaysWeatherData(cityName:String, units:String){
-        val retrofit = Retrofit.Builder().addConverterFactory(GsonConverterFactory.create()).baseUrl("https://api.openweathermap.org/data/2.5/").build().create(
-            ApiInterface::class.java)
-        val response = retrofit.getNextDaysWeatherData(cityName,"bd04d1ce49301ed0175976c62138cd19",units)
-        response.enqueue(object : Callback<WeatherApp> {
-            override fun onResponse(call: Call<WeatherApp>, response: Response<WeatherApp>) {
-                val responseBody = response.body()
-
-                if (response.isSuccessful && responseBody != null){
-                    //val tmp = responseBody.
-                }
-            }
-            override fun onFailure(call: Call<WeatherApp>, t: Throwable) {
-                t.printStackTrace()
-                runOnUiThread {
-                    Toast.makeText(applicationContext, "Location not found", Toast.LENGTH_SHORT).show()
-                }
-            }
-        })
     }
     private fun changeImagsAccordingToWeatherCondition(conditions: String){
         when(conditions){

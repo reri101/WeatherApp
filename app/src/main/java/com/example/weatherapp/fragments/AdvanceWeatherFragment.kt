@@ -34,6 +34,7 @@ class AdvanceWeatherFragment : Fragment() {
     private lateinit var sharedPreferences: SharedPreferences
     private lateinit var binding: FragmentAdvanceWeatherBinding
     private lateinit var cityName: String
+    private lateinit var units: String
     private val handler = Handler(Looper.getMainLooper())
     private var isWeatherUpdateThreadRunning = false
 
@@ -44,15 +45,13 @@ class AdvanceWeatherFragment : Fragment() {
         binding = FragmentAdvanceWeatherBinding.inflate(inflater, container, false)
         sharedPreferences = requireContext().getSharedPreferences("WeatherAppPrefs", Context.MODE_PRIVATE)
         cityName = sharedPreferences.getString("city_setted", "Warsaw") ?: "Warsaw"
-        //setUpWeatherInfo()
+        units = sharedPreferences.getString("temperatureUnit", "metric") ?: "metric"
+        loadWeatherDataFromFile(cityName, units)
         return binding.root
     }
 
     override fun onResume() {
         super.onResume()
-        val units = sharedPreferences.getString("temperatureUnit", "metric") ?: "metric"
-        cityName = sharedPreferences.getString("city_setted", "Warsaw") ?: "Warsaw"
-
         if (!isWeatherUpdateThreadRunning) {
             startWeatherUpdateThread()
             isWeatherUpdateThreadRunning = true
@@ -68,9 +67,8 @@ class AdvanceWeatherFragment : Fragment() {
     private fun startWeatherUpdateThread() {
         val runnable = object : Runnable {
             override fun run() {
-                //Log.d("watek", ":--- $cityName")
                 setUpWeatherInfo()
-                handler.postDelayed(this, 10000)
+                handler.postDelayed(this, 1000)
             }
         }
         handler.post(runnable)
@@ -78,12 +76,14 @@ class AdvanceWeatherFragment : Fragment() {
 
 
     fun setUpWeatherInfo(){
-        val units = sharedPreferences.getString("temperatureUnit", "metric") ?: "metric"
-        cityName = sharedPreferences.getString("city_setted", "Warsaw") ?: "Warsaw"
+        val units2 = sharedPreferences.getString("temperatureUnit", "metric") ?: "metric"
+        val cityName2 = sharedPreferences.getString("city_setted", "Warsaw") ?: "Warsaw"
 
-        //Log.d("watek", ":cc $cityName")
-        loadWeatherDataFromFile(cityName, units)
-
+        if(cityName != cityName2 || units != units2) {
+            units=units2
+            cityName=cityName2
+            loadWeatherDataFromFile(cityName2, units2)
+        }
         updateCurrentTime()
     }
 

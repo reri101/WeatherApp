@@ -64,25 +64,19 @@ class NextDaysWeatherFragment : Fragment() {
             override fun run() {
                 val units = sharedPreferences.getString("temperatureUnit", "metric") ?: "metric"
                 cityName = sharedPreferences.getString("city_setted", "Warsaw") ?: "Warsaw"
-//                Log.d("watek", ":--- $cityName")
                 setupRecyclerView(cityName,units)
-                handler.postDelayed(this, 10000)
+                handler.postDelayed(this, 1000)
             }
         }
         handler.post(runnable)
     }
 
     private fun setupRecyclerView(cityName: String, units: String) {
-
         val shouldFetchFromNetwork = shouldFetchWeatherFromNetwork()
-//        Log.d("citynamee", ":x $cityName")
-//        Log.d("shouldFetchFromNetworkND", ": $shouldFetchFromNetwork")
         if (shouldFetchFromNetwork) {
-//            Log.d("watek", ":.. $cityName")
             val apiRequestUrl = generateWeatherApiRequestUrl(cityName, units)
             fetchWeatherData(apiRequestUrl)
         }else{
-//            Log.d("watek", ":.c. $cityName")
             val nextDayWeatherList = loadWeatherDataFromFile(cityName)
             activity?.runOnUiThread {
                 val adapter = NextDaysWeatherAdapter(requireContext(),nextDayWeatherList.weatherList)
@@ -90,8 +84,6 @@ class NextDaysWeatherFragment : Fragment() {
                 binding.recyclerView.layoutManager = LinearLayoutManager(requireContext())
             }
         }
-
-
     }
 
     private fun generateWeatherApiRequestUrl(cityName: String, units: String): String {

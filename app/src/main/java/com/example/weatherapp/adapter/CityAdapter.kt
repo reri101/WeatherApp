@@ -16,7 +16,6 @@ import java.util.ArrayList
 class CityAdapter(private val listener: OnDeleteClickListener, private val cities: MutableList<String> = mutableListOf()) : RecyclerView.Adapter<CityAdapter.ViewHolder>() {
 
     private lateinit var weatherClickListener: OnWeatherClickListener
-    private lateinit var sharedPreferences: SharedPreferences
 
     fun setOnWeatherClickListener(listener: OnWeatherClickListener) {
         this.weatherClickListener = listener
@@ -48,8 +47,6 @@ class CityAdapter(private val listener: OnDeleteClickListener, private val citie
     }
 
     fun addCity(city: String) {
-        val s = cities.size
-//        Log.d("citiesCounter", "$s")
         cities.add(city)
         notifyItemInserted(cities.size - 1)
     }

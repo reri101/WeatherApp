@@ -20,9 +20,6 @@ class FragmentPagedAdapter(
     }
 
     override fun createFragment(position: Int): Fragment {
-//        Log.d("createFragment", "XXXXX ")
-
-//        Log.d("citynamee", "cn0 $cityName")
         return if (position == 0)
             BasicWeatherFragment()
         else if (position == 1)
@@ -30,7 +27,5 @@ class FragmentPagedAdapter(
         else{
             NextDaysWeatherFragment().newInstance(cityName)
         }
-
-//        Log.d("createFragment", "XXXXX-- ")
     }
 }

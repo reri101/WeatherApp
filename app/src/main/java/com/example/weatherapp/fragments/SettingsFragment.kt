@@ -160,13 +160,11 @@ class SettingsFragment : Fragment() {
                 val weatherObj = jsonArray.getJSONObject(i)
                 val dtTxt = weatherObj.getString("dt_txt")
 
-                // Konwersja daty
                 val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
                 val date = sdf.parse(dtTxt)
                 val calendar = Calendar.getInstance()
                 calendar.time = date
 
-                // Sprawdź czy godzina w dacie jest równa 15:00
                 val hour = calendar.get(Calendar.HOUR_OF_DAY)
                 if (hour == 15) {
                     val mainObj = weatherObj.getJSONObject("main")
@@ -277,17 +275,13 @@ class SettingsFragment : Fragment() {
                         coordinates1 = String.format(Locale.getDefault(), "%.2f", responseBody.coord.lat.toString().toDouble()),
                         coordinates2 = String.format(Locale.getDefault(), "%.2f", responseBody.coord.lon.toString().toDouble())
                     )
-
-
                     saveWeatherDataToFile(cityName, weatherData)
 
                     val editor = sharedPreferences.edit()
                     editor.putLong("lastRefreshTime_x"+cityName, System.currentTimeMillis())
-//                    Log.d("shouldFetchFromNetwork", ":1 lastRefreshTime_x"+cityName)
                     editor.apply()
 
                 }
-
             }
 
             override fun onFailure(call: Call<WeatherApp>, t: Throwable) {

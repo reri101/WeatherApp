@@ -8,5 +8,4 @@ data class NextDayWeatherItem(
     val weatherDescription: String,
     val windSpeed: String,
     val humidity: String
-    // Dodaj inne pola, jeśli są potrzebne
 )

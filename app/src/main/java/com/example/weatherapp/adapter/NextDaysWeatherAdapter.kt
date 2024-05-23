@@ -44,28 +44,6 @@ class NextDaysWeatherAdapter(private val context: Context,private val nextDayWea
                 itemView.findViewById<TextView>(R.id.weatherDescr).text = nextDayWeather.weatherDescription
                 itemView.findViewById<TextView>(R.id.windSpeed).text = nextDayWeather.windSpeed
                 itemView.findViewById<TextView>(R.id.humidity).text = nextDayWeather.humidity
-
-                val imgG = itemView.findViewById<ImageView>(R.id.imageGraphic)
-//                when(nextDayWeather.condition){
-//                    "Clear Sky", "Sunny", "Clear" ->{
-//                        imgG.setBackgroundResource(R.drawable.sunny)
-//                    }
-//
-//                    "Partly Clouds", "Clouds", "Overcast", "Mist", "Foggy", "Haze" ->{
-//                        imgG.setBackgroundResource(R.drawable.cloud_black)
-//                    }
-//
-//                    "Light Rain", "Drizzle", "Moderate Rain", "Showers", "Heavy Rain", "Rain" ->{
-//                        imgG.setBackgroundResource(R.drawable.rain)
-//                    }
-//
-//                    "Light Snow", "Moderate Snow", "Heavy Snow", "Blizzard" ->{
-//                        imgG.setBackgroundResource(R.drawable.snow)
-//                    }
-//                    else ->{
-//                        imgG.setBackgroundResource(R.drawable.sunny)
-//                    }
-//                }
             }
         }
     }

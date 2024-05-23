@@ -31,14 +31,7 @@ import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-
-// odczytywanie z json gdy przy ladowaniu fragmentu czas od ostatniego pobhrania informacji z inrternetu nie wyniosl wymaganej liczby
-// informacja o polaczeniu z internetem
-// widok poziomy dla teleofnu
-// widok pionowy dla tabletow podzielony na 3 zamiast viewpagera
-// widok poziomy dla tabletu
 class FavouriteListFragment : Fragment(), CityAdapter.OnDeleteClickListener, CityAdapter.OnWeatherClickListener {
-
     private lateinit var adapter: CityAdapter
     private lateinit var recyclerView: RecyclerView
     private lateinit var searchView: SearchView
@@ -69,15 +62,12 @@ class FavouriteListFragment : Fragment(), CityAdapter.OnDeleteClickListener, Cit
         val favouriteCitiesSet = sharedPreferences.getStringSet("favoriteCities", emptySet()) ?: emptySet()
         if (favouriteCitiesSet != null) {
             for (city in favouriteCitiesSet) {
-                //Log.d("cities", "$city")
                 adapter.addCity(city)
             }
         }
 
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
-                // Sprawdź, czy zdarzenie jest wywoływane po naciśnięciu Enter
-                //Log.d("AddCity", "XXX")
                 if (!query.isNullOrEmpty() && isAdded) {
                     val query = searchView.query.toString()
                     if (!query.isNullOrEmpty()) {
@@ -88,15 +78,12 @@ class FavouriteListFragment : Fragment(), CityAdapter.OnDeleteClickListener, Cit
                 return true
             }
 
-
             override fun onQueryTextChange(newText: String?): Boolean {
-                //Log.d("AddCity", "X")
                 return false
             }
         })
 
         addToFavButton.setOnClickListener {
-
 
             val query = searchView.query.toString()
             if (!query.isNullOrEmpty()) {
@@ -154,15 +141,6 @@ class FavouriteListFragment : Fragment(), CityAdapter.OnDeleteClickListener, Cit
         val tabLayout = requireActivity().findViewById<TabLayout>(R.id.tabLayout)
         val pogodaTab = tabLayout.getTabAt(1)
         pogodaTab?.select()
-
-
-//        val cityName = adapter.getCity(position)
-//        val weatherFragment = WeatherFragment.newInstance(cityName)
-//        Log.d("citynamee", "cn1 $cityName")
-//        val transaction = requireActivity().supportFragmentManager.beginTransaction()
-//        transaction.replace(R.id.constLayout, weatherFragment)
-//        transaction.addToBackStack(null)
-//        transaction.commit()
     }
 
     override fun onDeleteClick(position: Int) {

@@ -16,7 +16,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <!-- LinearLayout zajmujący lewą część -->
         <LinearLayout
             android:id="@+id/linearLayout"
             android:layout_width="0dp"
@@ -28,27 +27,22 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent">
 
-            <!-- Pierwsza ramka zajmująca górną część -->
             <FrameLayout
                 android:id="@+id/standardFrame"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1">
-                <!-- Tutaj możesz umieścić swój fragment lub inne widoki -->
             </FrameLayout>
 
-            <!-- Druga ramka zajmująca dolną połowę -->
             <FrameLayout
                 android:id="@+id/advanceFrame"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1">
-                <!-- Tutaj możesz umieścić swój fragment lub inne widoki -->
             </FrameLayout>
 
         </LinearLayout>
 
-        <!-- FrameLayout zajmujący prawą część -->
         <FrameLayout
             android:id="@+id/nextDFrame"
             android:layout_width="0dp"
@@ -59,7 +53,6 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent">
 
-            <!-- Wewnątrz FrameLayout możesz umieścić swoje widoki -->
         </FrameLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>

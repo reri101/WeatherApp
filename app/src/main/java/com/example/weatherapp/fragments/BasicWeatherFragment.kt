@@ -31,19 +31,13 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
-
-// dodanie watkow aby odswierzac informacje pogoodwe i widok gdy minie okreslony czas zamiast gdy ponownie wejdziemy
-// co 2 min odswierzanie
-// po wyszukaniu miasta w ulubione powinno zamieniac widok ale nie dodawac do ulubionych
-// dodawanie do ulubionych powinno byc dodatkowe np w wyszukiwaniu w prawym rogu byl by guzik dodac do ulubionych
-// naprawic widok po zmianie na farenheita
-
 class BasicWeatherFragment : Fragment() {
 
     private lateinit var sharedPreferences: SharedPreferences
     private lateinit var binding: FragmentBasicWeatherBinding
     private lateinit var bindingMain: ActivityMainBinding
     private lateinit var cityName: String
+    private lateinit var units: String
     private val handler = Handler(Looper.getMainLooper())
     private var isWeatherUpdateThreadRunning = false
 
@@ -56,16 +50,10 @@ class BasicWeatherFragment : Fragment() {
         binding = FragmentBasicWeatherBinding.inflate(inflater, container, false)
         sharedPreferences = requireContext().getSharedPreferences("WeatherAppPrefs", Context.MODE_PRIVATE)
         cityName = sharedPreferences.getString("city_setted", "Warsaw") ?: "Warsaw"
-        //Log.d("citynamee", "cnn $cityName")
-
-        //startWeatherUpdateThread()
+        units = sharedPreferences.getString("temperatureUnit", "metric") ?: "metric"
+        loadWeatherDataFromFile(cityName, units)
         return binding.root
     }
-
-    //ondestrv
-
-
-
 
     override fun onResume() {
         super.onResume()
@@ -84,32 +72,28 @@ class BasicWeatherFragment : Fragment() {
     private fun startWeatherUpdateThread() {
         val runnable = object : Runnable {
             override fun run() {
-                //Log.d("watek", ":--- $cityName")
                 setUpWeatherInfo()
-                handler.postDelayed(this, 10000)
+                handler.postDelayed(this, 1000)
             }
         }
         handler.post(runnable)
     }
-
-    // onpause
-
     private fun setUpWeatherInfo() {
-        val units = sharedPreferences.getString("temperatureUnit", "metric") ?: "metric"
-        cityName = sharedPreferences.getString("city_setted", "Warsaw") ?: "Warsaw"
+        val units2 = sharedPreferences.getString("temperatureUnit", "metric") ?: "metric"
+        val cityName2 = sharedPreferences.getString("city_setted", "Warsaw") ?: "Warsaw"
 
         val shouldFetchFromNetwork = shouldFetchWeatherFromNetwork()
-        //Log.d("shouldFetchFromNetwork", ": $shouldFetchFromNetwork")
-        //Log.d("watek", ":xxx $cityName")
         if (shouldFetchFromNetwork) {
-            //Log.d("watek", ":x $cityName")
-            fetachWeatherData(cityName, units)
+            units=units2
+            cityName=cityName2
+            fetachWeatherData(cityName2, units2)
         }else{
-            loadWeatherDataFromFile(cityName,units)
+            if(cityName != cityName2 || units != units2) {
+                units=units2
+                cityName=cityName2
+                loadWeatherDataFromFile(cityName2, units2)
+            }
         }
-
-// nowy watek
-
         updateCurrentTime()
     }
 
@@ -121,7 +105,6 @@ class BasicWeatherFragment : Fragment() {
     }
 
     private fun fetachWeatherData(cityName: String, units: String) {
-        //Log.d("citynamee", ": $cityName")
         val retrofit = Retrofit.Builder()
             .addConverterFactory(GsonConverterFactory.create())
             .baseUrl("https://api.openweathermap.org/data/2.5/")
@@ -178,7 +161,6 @@ class BasicWeatherFragment : Fragment() {
 
                     val editor = sharedPreferences.edit()
                     editor.putLong("lastRefreshTime_x"+cityName, System.currentTimeMillis())
-                    //Log.d("shouldFetchFromNetwork", ":1 lastRefreshTime_x"+cityName)
                     editor.apply()
 
                     updateUI(weatherData,units)
@@ -274,7 +256,6 @@ class BasicWeatherFragment : Fragment() {
 
     private fun shouldFetchWeatherFromNetwork(): Boolean {
         val lastRefreshTime = sharedPreferences.getLong("lastRefreshTime_x"+cityName, 0L)
-        //Log.d("shouldFetchFromNetwork", ": lastRefreshTime_x"+cityName)
         val refreshFrequency = sharedPreferences.getInt("refreshFrequency", 6)
         val currentTime = System.currentTimeMillis()
         val elapsedTimeSinceLastRefresh = currentTime - lastRefreshTime

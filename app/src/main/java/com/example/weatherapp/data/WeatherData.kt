@@ -1,6 +1,5 @@
 package com.example.weatherapp.data
 
-import com.example.weatherapp.dataND.NextDaysWeatherApp
 
 data class WeatherData(
     val cityName: String,
@@ -20,5 +19,4 @@ data class WeatherData(
     val desc: String,
     val coordinates1: String,
     val coordinates2: String,
-   // val nextDays: NextDaysWeatherApp
 )
