@@ -68,6 +68,7 @@ class FavouriteListFragment : Fragment(), CityAdapter.OnDeleteClickListener, Cit
 
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
+                Log.d("asd","asdasdasd")
                 if (!query.isNullOrEmpty() && isAdded) {
                     val query = searchView.query.toString()
                     if (!query.isNullOrEmpty()) {

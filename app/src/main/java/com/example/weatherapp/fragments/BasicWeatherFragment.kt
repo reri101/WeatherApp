@@ -186,6 +186,7 @@ class BasicWeatherFragment : Fragment() {
             isr.close()
             val gson = Gson()
             val weatherData = gson.fromJson(sb.toString(), WeatherData::class.java)
+            Log.d("conditions2",weatherData.condition)
             updateUI(weatherData, units)
         } catch (e: IOException) {
             e.printStackTrace()
@@ -206,7 +207,7 @@ class BasicWeatherFragment : Fragment() {
 
     private fun updateUI(weatherData: WeatherData,units: String) {
         binding.temperatureB.text = binding.temperatureB.text.toString().replace("00:00", weatherData.temperatureC)
-        binding.weatherTypeB?.text = binding.weatherTypeB?.text.toString().replace("Sunny", weatherData.condition)
+        binding.weatherTypeB?.text = weatherData.condition
         binding.dayOfDateB.text = dayName(System.currentTimeMillis())
         binding.dateB.text = date(System.currentTimeMillis())
         binding.descriptionB.text = weatherData.desc

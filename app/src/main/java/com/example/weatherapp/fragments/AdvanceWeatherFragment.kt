@@ -116,13 +116,13 @@ class AdvanceWeatherFragment : Fragment() {
     }
     private fun updateUI(weatherData: WeatherData,units: String) {
         binding.temperature?.text = binding.temperature?.text.toString().replace("00:00",weatherData.temperatureC)
-        binding.weatherType?.text = binding.weatherType?.text.toString().replace("Sunny",weatherData.condition)
+        binding.weatherType?.text = weatherData.condition
         binding.humidity.text = binding.humidity.text.toString().replace("000",weatherData.humidity)
         binding.windSpeed.text = binding.windSpeed.text.toString().replace("0.00",weatherData.windSpeed)
         binding.sunrise.text = time(weatherData.sunRise)
         binding.sunset.text = time(weatherData.sunSet)
         binding.pressure.text = binding.pressure.text.toString().replace("0000",weatherData.pressure)
-        binding.weatherCondition.text = binding.weatherCondition.text.toString().replace("00:00",weatherData.windDeg)
+        binding.weatherCondition.text = weatherData.windDeg + "°"
         binding.dayOfDate?.text=dayName(System.currentTimeMillis())
         binding.date?.text=date(System.currentTimeMillis())
         binding.description?.text=weatherData.desc
